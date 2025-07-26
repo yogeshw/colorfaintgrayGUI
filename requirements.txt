@@ -1,0 +1,15 @@
+# astscript-color-faint-gray GUI Application Dependencies
+
+# GUI Framework
+PyQt6>=6.5.0
+
+# Scientific Computing
+numpy>=1.24.0
+astropy>=5.2.0
+
+# Image Processing
+Pillow>=9.5.0
+matplotlib>=3.7.0
+
+# Additional utilities
+psutil>=5.9.0
