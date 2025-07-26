@@ -86,8 +86,8 @@ class MainWindow(QMainWindow):
         self.load_settings()
         
         # Set window properties
-        self.setWindowTitle("astscript-color-faint-gray GUI")
-        self.setMinimumSize(1200, 800)
+        self.setWindowTitle("colorfaintgrayGUI")
+        self.setMinimumSize(1400, 900)
     
     def apply_light_theme_styling(self):
         """Apply light theme styling to override dark system themes."""
@@ -109,6 +109,8 @@ class MainWindow(QMainWindow):
         QTabWidget::pane {
             border: 1px solid #c0c0c0;
             background-color: #ffffff;
+            margin: 0px;
+            padding: 1px;
         }
         
         QTabBar::tab {
@@ -285,7 +287,7 @@ class MainWindow(QMainWindow):
         
         # Main layout
         main_layout = QHBoxLayout(central_widget)
-        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setContentsMargins(2, 2, 2, 2)
         
         # Create main splitter
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -293,8 +295,8 @@ class MainWindow(QMainWindow):
         
         # Left panel - Parameters
         self.parameter_panel = ParameterPanel(self.config, self)
-        self.parameter_panel.setMaximumWidth(350)
-        self.parameter_panel.setMinimumWidth(250)
+        self.parameter_panel.setMaximumWidth(280)
+        self.parameter_panel.setMinimumWidth(200)
         main_splitter.addWidget(self.parameter_panel)
         
         # Center area - Tabs
@@ -305,12 +307,15 @@ class MainWindow(QMainWindow):
         main_splitter.setStretchFactor(0, 0)  # Parameter panel doesn't stretch
         main_splitter.setStretchFactor(1, 1)  # Tab area stretches
         
-        # Set initial splitter sizes
-        main_splitter.setSizes([300, 900])
+        # Set initial splitter sizes - heavily favor image area
+        main_splitter.setSizes([220, 1180])
     
     def setup_center_area(self):
         """Setup center tabbed area."""
         self.tab_widget = QTabWidget()
+        
+        # Reduce tab widget margins for more image space
+        self.tab_widget.setContentsMargins(0, 0, 0, 0)
         
         # Image Loader Tab
         self.image_loader = ImageLoaderWidget(self.config, self)
@@ -1015,6 +1020,9 @@ class MainWindow(QMainWindow):
     
     def on_add_to_comparison_from_cache(self, entry_id: str, entry):
         """Add cached image to comparison view."""
+        print(f"Adding to comparison: {entry_id}, image_path: {entry.image_path}")
+        print(f"File exists: {os.path.exists(entry.image_path)}")
+        
         success = self.comparison_widget.add_image_for_comparison(
             entry.image_path, entry
         )

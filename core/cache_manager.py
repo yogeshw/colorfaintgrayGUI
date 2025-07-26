@@ -365,12 +365,29 @@ class CacheManager:
                     # Skip malformed entries
                     continue
             
-            # Verify that image files still exist
+            # Verify that image files still exist and fix paths if needed
             valid_entries = {}
             for entry_id, entry in entries.items():
+                # Check if image path exists
                 if os.path.exists(entry.image_path):
                     valid_entries[entry_id] = entry
-            
+                else:
+                    # Try to fix the path - check if the image exists in our current cache
+                    expected_path = self.images_dir / f"{entry_id}.tif"
+                    if expected_path.exists():
+                        # Update the path and add to valid entries
+                        entry.image_path = str(expected_path)
+                        valid_entries[entry_id] = entry
+                        print(f"Fixed cache path for {entry_id}: {expected_path}")
+                
+                # Also fix thumbnail path if needed
+                if entry_id in valid_entries and entry.thumbnail_path:
+                    if not os.path.exists(entry.thumbnail_path):
+                        expected_thumbnail = self.thumbnails_dir / f"{entry_id}.png"
+                        if expected_thumbnail.exists():
+                            entry.thumbnail_path = str(expected_thumbnail)
+                            print(f"Fixed thumbnail path for {entry_id}: {expected_thumbnail}")
+
             return valid_entries
             
         except (json.JSONDecodeError, IOError):

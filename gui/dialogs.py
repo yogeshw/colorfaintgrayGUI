@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget,
     QGroupBox, QLabel, QPushButton, QLineEdit, QSpinBox, QCheckBox,
     QFileDialog, QTextEdit, QFrame, QComboBox, QDialogButtonBox,
-    QMessageBox, QScrollArea
+    QMessageBox, QScrollArea, QWidget
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPixmap, QIcon
@@ -421,15 +421,16 @@ class AboutDialog(QDialog):
         """Initialize about dialog."""
         super().__init__(parent)
         
-        self.setWindowTitle("About")
+        self.setWindowTitle("About colorfaintgrayGUI")
         self.setModal(True)
-        self.setFixedSize(400, 300)
+        self.setFixedSize(600, 500)
         
         self.setup_ui()
     
     def setup_ui(self):
         """Setup about dialog UI."""
         layout = QVBoxLayout(self)
+        layout.setSpacing(15)
         
         # Application icon and title
         header_layout = QHBoxLayout()
@@ -437,7 +438,6 @@ class AboutDialog(QDialog):
         # Icon placeholder
         icon_label = QLabel()
         icon_label.setFixedSize(64, 64)
-        icon_label.setStyleSheet("background-color: #4CAF50; border-radius: 10px;")
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setText("GUI")
         icon_label.setStyleSheet("""
@@ -454,12 +454,12 @@ class AboutDialog(QDialog):
         # Title and version
         title_layout = QVBoxLayout()
         
-        title_label = QLabel("astscript-color-faint-gray GUI")
-        title_label.setFont(QFont("", 16, QFont.Weight.Bold))
+        title_label = QLabel("colorfaintgrayGUI")
+        title_label.setFont(QFont("", 18, QFont.Weight.Bold))
         title_layout.addWidget(title_label)
         
         version_label = QLabel("Version 1.0.0")
-        version_label.setStyleSheet("color: #666;")
+        version_label.setStyleSheet("color: #666; font-size: 12px;")
         title_layout.addWidget(version_label)
         
         header_layout.addLayout(title_layout)
@@ -469,37 +469,137 @@ class AboutDialog(QDialog):
         
         # Description
         description = QLabel(
-            "A Qt6-based GUI application that provides an intuitive interface for "
+            "colorfaintgrayGUI is a Qt6-based GUI application that provides an intuitive interface for "
             "GNU Astronomy Utilities' astscript-color-faint-gray script, enabling "
-            "users to create color astronomical images with full dynamic range."
+            "users to create color astronomical images with full dynamic range and "
+            "enhanced visualization capabilities."
         )
         description.setWordWrap(True)
-        description.setStyleSheet("margin: 20px 0px;")
+        description.setStyleSheet("margin: 10px 0px; font-size: 12px; line-height: 1.4;")
         layout.addWidget(description)
         
-        # Information
-        info_text = (
+        # Create tabbed information area
+        tab_widget = QTabWidget()
+        
+        # About tab
+        about_tab = QWidget()
+        about_layout = QVBoxLayout(about_tab)
+        
+        # Author and project information
+        author_info = QLabel(
+            "<b>Author:</b> Yogesh Wadadekar<br>"
+            "<b>Development Year:</b> 2025<br>"
+            "<b>Project:</b> colorfaintgrayGUI - GUI Frontend for astscript-color-faint-gray<br><br>"
+            
             "<b>Built with:</b><br>"
             "• Python 3.x<br>"
-            "• PyQt6<br>"
+            "• PyQt6 GUI Framework<br>"
             "• GNU Astronomy Utilities<br>"
-            "<br>"
-            "<b>Author:</b> Yogesh<br>"
-            "<b>Date:</b> 2025<br>"
-            "<br>"
-            "<b>License:</b> GNU General Public License v3"
+            "• astscript-color-faint-gray backend<br><br>"
+            
+            "<b>Features:</b><br>"
+            "• Interactive parameter adjustment<br>"
+            "• Real-time image preview<br>"
+            "• Image caching and comparison<br>"
+            "• Preset management<br>"
+            "• Command history and export"
         )
+        author_info.setWordWrap(True)
+        author_info.setTextFormat(Qt.TextFormat.RichText)
+        author_info.setStyleSheet("font-size: 11px; line-height: 1.3;")
+        about_layout.addWidget(author_info)
+        about_layout.addStretch()
         
-        info_label = QLabel(info_text)
-        info_label.setWordWrap(True)
-        layout.addWidget(info_label)
+        tab_widget.addTab(about_tab, "About")
         
-        layout.addStretch()
+        # License tab
+        license_tab = QWidget()
+        license_layout = QVBoxLayout(license_tab)
+        
+        # License information
+        license_header = QLabel(
+            "<b>GNU General Public License v3.0</b><br>"
+            "Copyright (C) 2025 Yogesh Wadadekar"
+        )
+        license_header.setTextFormat(Qt.TextFormat.RichText)
+        license_header.setStyleSheet("font-size: 12px; font-weight: bold; margin-bottom: 10px;")
+        license_layout.addWidget(license_header)
+        
+        # License summary
+        license_summary = QLabel(
+            "This program is free software: you can redistribute it and/or modify "
+            "it under the terms of the GNU General Public License as published by "
+            "the Free Software Foundation, either version 3 of the License, or "
+            "(at your option) any later version.<br><br>"
+            
+            "This program is distributed in the hope that it will be useful, "
+            "but WITHOUT ANY WARRANTY; without even the implied warranty of "
+            "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the "
+            "GNU General Public License for more details.<br><br>"
+            
+            "<b>Key License Features:</b><br>"
+            "• Freedom to use the software for any purpose<br>"
+            "• Freedom to study and modify the source code<br>"
+            "• Freedom to distribute copies<br>"
+            "• Freedom to distribute modified versions<br><br>"
+            
+            "You should have received a copy of the GNU General Public License "
+            "along with this program. If not, see "
+            "<a href='https://www.gnu.org/licenses/'>https://www.gnu.org/licenses/</a>."
+        )
+        license_summary.setWordWrap(True)
+        license_summary.setTextFormat(Qt.TextFormat.RichText)
+        license_summary.setOpenExternalLinks(True)
+        license_summary.setStyleSheet("font-size: 11px; line-height: 1.3;")
+        license_layout.addWidget(license_summary)
+        license_layout.addStretch()
+        
+        tab_widget.addTab(license_tab, "License")
+        
+        # Credits tab
+        credits_tab = QWidget()
+        credits_layout = QVBoxLayout(credits_tab)
+        
+        credits_info = QLabel(
+            "<b>Acknowledgments and Credits:</b><br><br>"
+            
+            "<b>GNU Astronomy Utilities:</b><br>"
+            "This application is built upon the excellent work of the GNU Astronomy "
+            "Utilities project, specifically the astscript-color-faint-gray script "
+            "which provides the core image processing functionality.<br><br>"
+            
+            "<b>PyQt6:</b><br>"
+            "The graphical user interface is built using PyQt6, the Python bindings "
+            "for the Qt framework, providing a modern and responsive user experience.<br><br>"
+            
+            "<b>Python Community:</b><br>"
+            "This project leverages the power of Python and its extensive ecosystem "
+            "of libraries for scientific computing and GUI development.<br><br>"
+            
+            "<b>Open Source Community:</b><br>"
+            "Special thanks to all the contributors and maintainers of the open source "
+            "projects that make this software possible."
+        )
+        credits_info.setWordWrap(True)
+        credits_info.setTextFormat(Qt.TextFormat.RichText)
+        credits_info.setStyleSheet("font-size: 11px; line-height: 1.3;")
+        credits_layout.addWidget(credits_info)
+        credits_layout.addStretch()
+        
+        tab_widget.addTab(credits_tab, "Credits")
+        
+        layout.addWidget(tab_widget)
         
         # Close button
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
         close_button = QPushButton("Close")
+        close_button.setMinimumWidth(100)
         close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button)
+        button_layout.addWidget(close_button)
+        
+        layout.addLayout(button_layout)
 
 
 class PresetDialog(QDialog):

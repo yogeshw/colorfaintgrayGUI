@@ -53,9 +53,10 @@ class ImageDisplayWidget(QLabel):
         
         # Widget setup
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setMinimumSize(200, 200)
+        self.setMinimumSize(400, 400)
         self.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc;")
         self.setScaledContents(False)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Mouse tracking for pan
         self.setMouseTracking(True)
@@ -122,13 +123,43 @@ class ImageDisplayWidget(QLabel):
         if not self.original_pixmap:
             return
         
-        # Calculate zoom factor to fit image in widget
-        widget_size = self.size()
+        # Get the scroll area size instead of widget size for better fitting
+        scroll_area = self.parent()
+        if hasattr(scroll_area, 'viewport'):
+            available_size = scroll_area.viewport().size()
+        else:
+            available_size = self.size()
+        
         image_size = self.original_pixmap.size()
         
-        scale_x = widget_size.width() / image_size.width()
-        scale_y = widget_size.height() / image_size.height()
-        scale = min(scale_x, scale_y, 1.0)  # Don't zoom in beyond 100%
+        # Add some padding to account for potential scrollbars
+        padding = 20
+        available_size = QSize(available_size.width() - padding, available_size.height() - padding)
+        
+        scale_x = available_size.width() / image_size.width()
+        scale_y = available_size.height() / image_size.height()
+        scale = min(scale_x, scale_y)  # Allow scaling beyond 100% to fill space
+        
+        self.zoom_factor = scale
+        self.update_display()
+    
+    def fill_window(self):
+        """Fill the window with the image (may crop some parts)."""
+        if not self.original_pixmap:
+            return
+        
+        # Get the scroll area size for better filling
+        scroll_area = self.parent()
+        if hasattr(scroll_area, 'viewport'):
+            available_size = scroll_area.viewport().size()
+        else:
+            available_size = self.size()
+        
+        image_size = self.original_pixmap.size()
+        
+        scale_x = available_size.width() / image_size.width()
+        scale_y = available_size.height() / image_size.height()
+        scale = max(scale_x, scale_y)  # Use max to fill entire space
         
         self.zoom_factor = scale
         self.update_display()
@@ -174,6 +205,9 @@ class ImageDisplayWidget(QLabel):
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation
         )
+        
+        # Resize the widget to match the scaled image size
+        self.resize(scaled_size)
         
         # Clear text and set pixmap
         self.setText("")
@@ -263,7 +297,7 @@ class ImageViewer(QWidget):
     def setup_ui(self):
         """Setup viewer UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(2, 2, 2, 2)
         
         # Toolbar
         self.setup_toolbar(layout)
@@ -271,9 +305,10 @@ class ImageViewer(QWidget):
         # Image display area
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(False)  # Changed to False for better zoom/pan
-        self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setContentsMargins(0, 0, 0, 0)
+        self.scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Image display widget
         self.image_display = ImageDisplayWidget()
@@ -289,7 +324,7 @@ class ImageViewer(QWidget):
         toolbar = QFrame()
         toolbar.setFrameStyle(QFrame.Shape.StyledPanel)
         toolbar_layout = QHBoxLayout(toolbar)
-        toolbar_layout.setContentsMargins(5, 5, 5, 5)
+        toolbar_layout.setContentsMargins(3, 3, 3, 3)
         
         # Zoom controls
         zoom_label = QLabel("Zoom:")
@@ -304,7 +339,7 @@ class ImageViewer(QWidget):
         self.zoom_slider.setMinimum(10)  # 10% zoom
         self.zoom_slider.setMaximum(1000)  # 1000% zoom
         self.zoom_slider.setValue(100)  # 100% zoom
-        self.zoom_slider.setMaximumWidth(150)
+        self.zoom_slider.setMaximumWidth(120)
         self.zoom_slider.valueChanged.connect(self.on_zoom_slider_changed)
         toolbar_layout.addWidget(self.zoom_slider)
         
@@ -318,7 +353,7 @@ class ImageViewer(QWidget):
         self.zoom_spinbox.setMaximum(1000)
         self.zoom_spinbox.setValue(100)
         self.zoom_spinbox.setSuffix("%")
-        self.zoom_spinbox.setMaximumWidth(80)
+        self.zoom_spinbox.setMaximumWidth(70)
         self.zoom_spinbox.valueChanged.connect(self.on_zoom_spinbox_changed)
         toolbar_layout.addWidget(self.zoom_spinbox)
         
@@ -328,11 +363,18 @@ class ImageViewer(QWidget):
         toolbar_layout.addWidget(spacer)
         
         # View controls
-        self.fit_btn = QPushButton("Fit to Window")
+        self.fit_btn = QPushButton("Fit")
+        self.fit_btn.setToolTip("Fit entire image to window (may show white space)")
         self.fit_btn.clicked.connect(self.fit_to_window)
         toolbar_layout.addWidget(self.fit_btn)
         
-        self.actual_size_btn = QPushButton("Actual Size")
+        self.fill_btn = QPushButton("Fill")
+        self.fill_btn.setToolTip("Fill window with image (may crop parts of image)")
+        self.fill_btn.clicked.connect(self.fill_window)
+        toolbar_layout.addWidget(self.fill_btn)
+        
+        self.actual_size_btn = QPushButton("100%")
+        self.actual_size_btn.setToolTip("Show image at actual size (100% zoom)")
         self.actual_size_btn.clicked.connect(self.actual_size)
         toolbar_layout.addWidget(self.actual_size_btn)
         
@@ -351,7 +393,7 @@ class ImageViewer(QWidget):
         status_frame = QFrame()
         status_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         status_layout = QHBoxLayout(status_frame)
-        status_layout.setContentsMargins(5, 5, 5, 5)
+        status_layout.setContentsMargins(3, 3, 3, 3)
         
         self.status_label = QLabel("No image loaded")
         status_layout.addWidget(self.status_label)
@@ -387,6 +429,9 @@ class ImageViewer(QWidget):
             self.status_label.setText(f"Loaded: {filename}")
             self.info_btn.setEnabled(True)
             self.update_zoom_controls()
+            
+            # Automatically fit image to window for maximum space utilization
+            self.fit_to_window()
         else:
             self.status_label.setText("Failed to load image")
             self.info_btn.setEnabled(False)
@@ -401,6 +446,7 @@ class ImageViewer(QWidget):
         self.zoom_slider.setEnabled(has_image)
         self.zoom_spinbox.setEnabled(has_image)
         self.fit_btn.setEnabled(has_image)
+        self.fill_btn.setEnabled(has_image)
         self.actual_size_btn.setEnabled(has_image)
         
         return success
@@ -418,6 +464,11 @@ class ImageViewer(QWidget):
     def fit_to_window(self):
         """Fit image to window."""
         self.image_display.fit_to_window()
+        self.update_zoom_controls()
+    
+    def fill_window(self):
+        """Fill window with image (may crop some parts)."""
+        self.image_display.fill_window()
         self.update_zoom_controls()
     
     def actual_size(self):

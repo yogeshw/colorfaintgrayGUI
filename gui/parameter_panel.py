@@ -111,7 +111,7 @@ class SliderSpinBoxControl(ParameterControl):
         self.spinbox.setMaximum(self.max_val)
         self.spinbox.setSingleStep(self.step)
         self.spinbox.setDecimals(self.decimals)
-        self.spinbox.setMinimumWidth(80)
+        self.spinbox.setMinimumWidth(65)
         self.spinbox.valueChanged.connect(self.on_spinbox_changed)
         control_layout.addWidget(self.spinbox, 0)
         
@@ -280,7 +280,7 @@ class CollapsibleGroupBox(QGroupBox):
         """Get layout for adding content."""
         if not self.content_widget.layout():
             layout = QVBoxLayout(self.content_widget)
-            layout.setContentsMargins(10, 5, 10, 5)
+            layout.setContentsMargins(5, 3, 5, 3)
         return self.content_widget.layout()
 
 
@@ -313,7 +313,7 @@ class ParameterPanel(QWidget):
     def setup_ui(self):
         """Setup parameter panel UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(3, 3, 3, 3)
         
         # Title
         title = QLabel("Parameters")
