@@ -162,7 +162,7 @@ class ComparisonImageWidget(QFrame):
         try:
             # Check if it's a PDF file
             if image_path and image_path.lower().endswith('.pdf'):
-                self.image_label.setText(f"PDF Image\\n{Path(image_path).name}\\n\\n(PDF preview not implemented)")
+                self.image_label.setText(f"PDF Image\n{Path(image_path).name}\n\n(PDF preview not implemented)")
                 # Update info even for PDFs
                 self.update_info()
                 return
@@ -177,7 +177,7 @@ class ComparisonImageWidget(QFrame):
                 # Initial display
                 self.update_image_display()
             else:
-                self.image_label.setText(f"Failed to load image\\n{Path(image_path).name if image_path else 'No path'}")
+                self.image_label.setText(f"Failed to load image\n{Path(image_path).name if image_path else 'No path'}")
                 
             # Update info
             self.update_info()
@@ -216,18 +216,18 @@ class ComparisonImageWidget(QFrame):
             info = "No detailed information available"
             if self.image_path:
                 file_size = os.path.getsize(self.image_path) / (1024 * 1024)  # MB
-                info += f"\\nFile size: {file_size:.1f} MB"
+                info += f"\nFile size: {file_size:.1f} MB"
         else:
-            info = f"Created: {self.cache_entry.timestamp}\\n"
-            info += f"Input files: {len(self.cache_entry.input_files)} images\\n\\n"
+            info = f"Created: {self.cache_entry.timestamp}\n"
+            info += f"Input files: {len(self.cache_entry.input_files)} images\n\n"
             
             # Show key parameters
             key_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval', 'qthresh']
-            info += "Key Parameters:\\n"
+            info += "Key Parameters:\n"
             for param in key_params:
                 value = self.cache_entry.parameters.get(param)
                 if value is not None:
-                    info += f"  {param}: {value}\\n"
+                    info += f"  {param}: {value}\n"
                     
         self.info_text.setPlainText(info)
     
@@ -595,8 +595,8 @@ class ImageComparisonWidget(QWidget):
             return
             
         # Parameter comparison table
-        analysis_text = "PARAMETER COMPARISON\\n"
-        analysis_text += "=" * 50 + "\\n\\n"
+        analysis_text = "PARAMETER COMPARISON\n"
+        analysis_text += "=" * 50 + "\n\n"
         
         # Get all unique parameters
         all_params = set()
@@ -612,11 +612,11 @@ class ImageComparisonWidget(QWidget):
                 continue
                 
             if param_group == important_params:
-                analysis_text += "Key Parameters:\\n"
+                analysis_text += "Key Parameters:\n"
             else:
-                analysis_text += "\\nOther Parameters:\\n"
+                analysis_text += "\nOther Parameters:\n"
                 
-            analysis_text += "-" * 30 + "\\n"
+            analysis_text += "-" * 30 + "\n"
             
             for param in param_group:
                 if param not in all_params:
@@ -633,10 +633,10 @@ class ImageComparisonWidget(QWidget):
                 # Only show if values differ or it's an important parameter
                 unique_values = set(v.split(": ", 1)[1] for v in values)
                 if len(unique_values) > 1 or param in important_params:
-                    analysis_text += f"{param}:\\n"
+                    analysis_text += f"{param}:\n"
                     for value in values:
-                        analysis_text += f"  {value}\\n"
-                    analysis_text += "\\n"
+                        analysis_text += f"  {value}\n"
+                    analysis_text += "\n"
         
         self.param_comparison.setPlainText(analysis_text)
         
@@ -777,8 +777,8 @@ class ImageComparisonWidget(QWidget):
             return
             
         # Compare parameters
-        diff_text = f"PARAMETER DIFFERENCES ({len(selected_images)} images)\\n"
-        diff_text += "=" * 60 + "\\n\\n"
+        diff_text = f"PARAMETER DIFFERENCES ({len(selected_images)} images)\n"
+        diff_text += "=" * 60 + "\n\n"
         
         # Get all parameter keys from selected images
         all_params = set()
@@ -797,8 +797,8 @@ class ImageComparisonWidget(QWidget):
                 if not param_group:
                     continue
                     
-                diff_text += f"{title}:\\n"
-                diff_text += "-" * len(title) + "\\n"
+                diff_text += f"{title}:\n"
+                diff_text += "-" * len(title) + "\n"
                 
                 differences_found = False
                 for param in param_group:
@@ -816,15 +816,15 @@ class ImageComparisonWidget(QWidget):
                     # Only show if values actually differ
                     unique_values = set(v.split(": ", 1)[1] for v in values)
                     if len(unique_values) > 1:
-                        diff_text += f"\\n{param}:\\n"
+                        diff_text += f"\n{param}:\n"
                         for value in values:
-                            diff_text += f"  {value}\\n"
+                            diff_text += f"  {value}\n"
                         differences_found = True
                 
                 if not differences_found and param_group == important_params:
-                    diff_text += "  All key parameters are identical\\n"
+                    diff_text += "  All key parameters are identical\n"
                 
-                diff_text += "\\n"
+                diff_text += "\n"
         
         self.diff_text.setPlainText(diff_text)
         self.diff_text.setVisible(True)
@@ -904,33 +904,33 @@ class ImageComparisonWidget(QWidget):
             # Create a readable summary
             summary_file = export_dir / f"comparison_{export_type}_summary.txt"
             with open(summary_file, 'w') as f:
-                f.write(f"Image Comparison Export Summary\\n")
-                f.write(f"{'='*40}\\n\\n")
-                f.write(f"Export Date: {comparison_data['exported_at']}\\n")
-                f.write(f"Export Type: {export_type.title()}\\n")
-                f.write(f"Number of Images: {len(images_to_export)}\\n\\n")
+                f.write(f"Image Comparison Export Summary\n")
+                f.write(f"{'='*40}\n\n")
+                f.write(f"Export Date: {comparison_data['exported_at']}\n")
+                f.write(f"Export Type: {export_type.title()}\n")
+                f.write(f"Number of Images: {len(images_to_export)}\n\n")
                 
                 for i, img_data in enumerate(comparison_data['images']):
-                    f.write(f"Image {i+1}: {img_data['file']}\\n")
+                    f.write(f"Image {i+1}: {img_data['file']}\n")
                     if 'parameters' in img_data:
-                        f.write("  Key Parameters:\\n")
+                        f.write("  Key Parameters:\n")
                         key_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval']
                         for param in key_params:
                             value = img_data['parameters'].get(param, 'default')
-                            f.write(f"    {param}: {value}\\n")
-                    f.write("\\n")
+                            f.write(f"    {param}: {value}\n")
+                    f.write("\n")
             
             QMessageBox.information(
                 self, "Export Complete",
-                f"Successfully exported {len(images_to_export)} images to:\\n{export_dir}\\n\\n"
-                f"Files created:\\n"
-                f"• {len(images_to_export)} image files\\n"
-                f"• 1 metadata file (JSON)\\n"
+                f"Successfully exported {len(images_to_export)} images to:\n{export_dir}\n\n"
+                f"Files created:\n"
+                f"• {len(images_to_export)} image files\n"
+                f"• 1 metadata file (JSON)\n"
                 f"• 1 summary file (TXT)"
             )
             
         except Exception as e:
             QMessageBox.critical(
                 self, "Export Error", 
-                f"Failed to export comparison:\\n\\n{str(e)}"
+                f"Failed to export comparison:\n\n{str(e)}"
             )

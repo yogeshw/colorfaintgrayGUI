@@ -484,7 +484,20 @@ class AboutDialog(QDialog):
         
         # About tab
         about_tab = QWidget()
-        about_layout = QVBoxLayout(about_tab)
+        about_tab_layout = QVBoxLayout(about_tab)
+        about_tab_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create scroll area for About tab
+        about_scroll = QScrollArea()
+        about_scroll.setWidgetResizable(True)
+        about_scroll.setFrameStyle(QFrame.Shape.NoFrame)
+        about_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        about_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Content widget for scroll area
+        about_content = QWidget()
+        about_layout = QVBoxLayout(about_content)
+        about_layout.setContentsMargins(10, 10, 10, 10)
         
         # Author and project information
         author_info = QLabel(
@@ -511,11 +524,28 @@ class AboutDialog(QDialog):
         about_layout.addWidget(author_info)
         about_layout.addStretch()
         
+        # Set content widget to scroll area and add to tab
+        about_scroll.setWidget(about_content)
+        about_tab_layout.addWidget(about_scroll)
+        
         tab_widget.addTab(about_tab, "About")
         
         # License tab
         license_tab = QWidget()
-        license_layout = QVBoxLayout(license_tab)
+        license_tab_layout = QVBoxLayout(license_tab)
+        license_tab_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create scroll area for License tab
+        license_scroll = QScrollArea()
+        license_scroll.setWidgetResizable(True)
+        license_scroll.setFrameStyle(QFrame.Shape.NoFrame)
+        license_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        license_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Content widget for scroll area
+        license_content = QWidget()
+        license_layout = QVBoxLayout(license_content)
+        license_layout.setContentsMargins(10, 10, 10, 10)
         
         # License information
         license_header = QLabel(
@@ -555,11 +585,28 @@ class AboutDialog(QDialog):
         license_layout.addWidget(license_summary)
         license_layout.addStretch()
         
+        # Set content widget to scroll area and add to tab
+        license_scroll.setWidget(license_content)
+        license_tab_layout.addWidget(license_scroll)
+        
         tab_widget.addTab(license_tab, "License")
         
         # Credits tab
         credits_tab = QWidget()
-        credits_layout = QVBoxLayout(credits_tab)
+        credits_tab_layout = QVBoxLayout(credits_tab)
+        credits_tab_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create scroll area for Credits tab
+        credits_scroll = QScrollArea()
+        credits_scroll.setWidgetResizable(True)
+        credits_scroll.setFrameStyle(QFrame.Shape.NoFrame)
+        credits_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        credits_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Content widget for scroll area
+        credits_content = QWidget()
+        credits_layout = QVBoxLayout(credits_content)
+        credits_layout.setContentsMargins(10, 10, 10, 10)
         
         credits_info = QLabel(
             "<b>Acknowledgments and Credits:</b><br><br>"
@@ -586,6 +633,10 @@ class AboutDialog(QDialog):
         credits_info.setStyleSheet("font-size: 11px; line-height: 1.3;")
         credits_layout.addWidget(credits_info)
         credits_layout.addStretch()
+        
+        # Set content widget to scroll area and add to tab
+        credits_scroll.setWidget(credits_content)
+        credits_tab_layout.addWidget(credits_scroll)
         
         tab_widget.addTab(credits_tab, "Credits")
         
