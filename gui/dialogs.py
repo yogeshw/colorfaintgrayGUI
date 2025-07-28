@@ -258,8 +258,9 @@ class SettingsDialog(QDialog):
         
         # Load advanced settings
         self.astscript_path_edit.setText(self.config.get("app.astscript_path", "astscript-color-faint-gray"))
-        self.keep_temp_check.setChecked(self.config.get("parameters.keeptmp", False))
-        self.show_params_check.setChecked(self.config.get("parameters.checkparams", False))
+        # These parameters are not persisted, always use defaults
+        self.keep_temp_check.setChecked(False)  # Default value for keeptmp
+        self.show_params_check.setChecked(False)  # Default value for checkparams
         
         self.update_cache_info()
     
@@ -281,10 +282,10 @@ class SettingsDialog(QDialog):
         
         # Apply advanced settings
         self.config.set("app.astscript_path", self.astscript_path_edit.text())
-        self.config.set("parameters.keeptmp", self.keep_temp_check.isChecked())
-        self.config.set("parameters.checkparams", self.show_params_check.isChecked())
+        # Note: keeptmp and checkparams are no longer saved to config
+        # They reset to defaults each time the app starts
         
-        # Save configuration
+        # Save configuration (only UI settings, not parameters)
         self.config.save()
     
     def restore_defaults(self):

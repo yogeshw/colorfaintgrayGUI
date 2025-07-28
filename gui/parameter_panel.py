@@ -192,6 +192,68 @@ class CheckBoxControl(ParameterControl):
         self.checkbox.blockSignals(False)
 
 
+class SpinBoxOnlyControl(ParameterControl):
+    """Double spinbox control for numeric parameters (no slider)."""
+    
+    def __init__(self, param_name: str, label: str, min_val: float, max_val: float,
+                 step: float = 0.1, decimals: int = 2, default: float = 1.0, parent=None):
+        """Initialize spinbox-only control.
+        
+        Args:
+            param_name: Parameter name
+            label: Display label
+            min_val: Minimum value
+            max_val: Maximum value
+            step: Step size
+            decimals: Number of decimal places
+            default: Default value
+            parent: Parent widget
+        """
+        super().__init__(param_name, label, parent)
+        self.min_val = min_val
+        self.max_val = max_val
+        self.step = step
+        self.decimals = decimals
+        self.default = default
+        
+        self.setup_ui()
+        self.set_value(default)
+    
+    def setup_ui(self):
+        """Setup control UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Label
+        self.label = QLabel(self.label_text)
+        self.label.setFont(QFont("", 9))
+        layout.addWidget(self.label)
+        
+        # Spinbox
+        self.spinbox = QDoubleSpinBox()
+        self.spinbox.setMinimum(self.min_val)
+        self.spinbox.setMaximum(self.max_val)
+        self.spinbox.setSingleStep(self.step)
+        self.spinbox.setDecimals(self.decimals)
+        self.spinbox.setMinimumWidth(80)
+        self.spinbox.valueChanged.connect(self.on_changed)
+        layout.addWidget(self.spinbox)
+    
+    def on_changed(self, value):
+        """Handle spinbox value change."""
+        self.value_changed.emit(self.param_name, value)
+    
+    def get_value(self):
+        """Get current value."""
+        return self.spinbox.value()
+    
+    def set_value(self, value):
+        """Set value."""
+        self.spinbox.blockSignals(True)
+        self.spinbox.setValue(value)
+        self.spinbox.blockSignals(False)
+
+
 class SpinBoxControl(ParameterControl):
     """Spinbox control for integer parameters."""
     
@@ -352,30 +414,30 @@ class ParameterPanel(QWidget):
         group = QGroupBox("Basic Settings")
         layout = QVBoxLayout(group)
         
-        # qbright parameter
-        qbright_control = SliderSpinBoxControl(
-            "qbright", "Brightness Quantile:", 0.0, 10.0, 0.01, 2, 1.0
+        # qbright parameter - brightness quantile 50
+        qbright_control = SpinBoxOnlyControl(
+            "qbright", "Brightness Quantile:", 0.0, 100.0, 0.01, 2, 50.0
         )
         self.controls["qbright"] = qbright_control
         layout.addWidget(qbright_control)
         
-        # stretch parameter
-        stretch_control = SliderSpinBoxControl(
-            "stretch", "Color Stretch:", 0.1, 200.0, 0.1, 1, 1.0
+        # stretch parameter - stretch 0.1
+        stretch_control = SpinBoxOnlyControl(
+            "stretch", "Color Stretch:", 0.01, 200.0, 0.01, 2, 0.1
         )
         self.controls["stretch"] = stretch_control
         layout.addWidget(stretch_control)
         
-        # contrast parameter
-        contrast_control = SliderSpinBoxControl(
-            "contrast", "Contrast:", 0.1, 10.0, 0.1, 2, 3.0
+        # contrast parameter - contrast 4.0
+        contrast_control = SpinBoxOnlyControl(
+            "contrast", "Contrast:", 0.1, 20.0, 0.1, 2, 4.0
         )
         self.controls["contrast"] = contrast_control
         layout.addWidget(contrast_control)
         
-        # gamma parameter
-        gamma_control = SliderSpinBoxControl(
-            "gamma", "Gamma Correction:", 0.1, 5.0, 0.1, 2, 0.8
+        # gamma parameter - gamma 0.5
+        gamma_control = SpinBoxOnlyControl(
+            "gamma", "Gamma Correction:", 0.1, 5.0, 0.1, 2, 0.5
         )
         self.controls["gamma"] = gamma_control
         layout.addWidget(gamma_control)
@@ -387,15 +449,15 @@ class ParameterPanel(QWidget):
         group = CollapsibleGroupBox("Advanced Settings", collapsed=True)
         layout = group.get_content_layout()
         
-        # Color/gray thresholds
-        colorval_control = SliderSpinBoxControl(
-            "colorval", "Color Threshold:", 0.0, 100.0, 0.1, 1, 0.0
+        # Color/gray thresholds - color threshold 15.0, grey threshold 14.0
+        colorval_control = SpinBoxOnlyControl(
+            "colorval", "Color Threshold:", 0.0, 100.0, 0.1, 1, 15.0
         )
         self.controls["colorval"] = colorval_control
         layout.addWidget(colorval_control)
         
-        grayval_control = SliderSpinBoxControl(
-            "grayval", "Gray Threshold:", 0.0, 100.0, 0.1, 1, 0.0
+        grayval_control = SpinBoxOnlyControl(
+            "grayval", "Gray Threshold:", 0.0, 100.0, 0.1, 1, 14.0
         )
         self.controls["grayval"] = grayval_control
         layout.addWidget(grayval_control)
@@ -541,17 +603,19 @@ class ParameterPanel(QWidget):
             if name in ["coloronly", "keeptmp", "checkparams"]:
                 parameters[name] = value
             # Only include non-default values for numeric parameters to keep command clean
-            elif name == "qbright" and value != 1.0:
+            elif name == "qbright" and value != 50.0:
                 parameters[name] = value
-            elif name == "stretch" and value != 1.0:
+            elif name == "stretch" and value != 0.1:
                 parameters[name] = value
-            elif name == "contrast" and value != 3.0:
+            elif name == "contrast" and value != 4.0:
                 parameters[name] = value
-            elif name == "gamma" and value != 0.8:
+            elif name == "gamma" and value != 0.5:
                 parameters[name] = value
             elif name == "quality" and value != 95:
                 parameters[name] = value
-            elif name in ["colorval", "grayval"] and value != 0.0:
+            elif name == "colorval" and value != 15.0:
+                parameters[name] = value
+            elif name == "grayval" and value != 14.0:
                 parameters[name] = value
         
         return parameters
@@ -574,14 +638,18 @@ class ParameterPanel(QWidget):
                 # Skip None values that controls can't handle
                 if value is not None:
                     control.set_value(value)
-                elif name in ["colorval", "grayval"]:
-                    control.set_value(0.0)  # Use 0.0 for threshold controls
+                elif name == "colorval":
+                    control.set_value(15.0)  # Use new default for color threshold
+                elif name == "grayval":
+                    control.set_value(14.0)  # Use new default for gray threshold
             elif name in defaults:
                 default_value = defaults[name]
                 # Handle None values by using control's default
                 if default_value is None:
-                    if name in ["colorval", "grayval"]:
-                        control.set_value(0.0)  # Use 0.0 for threshold controls
+                    if name == "colorval":
+                        control.set_value(15.0)  # Use new default for color threshold
+                    elif name == "grayval":
+                        control.set_value(14.0)  # Use new default for gray threshold
                     # Skip other None values - controls keep their initialization values
                 else:
                     control.set_value(default_value)
@@ -602,8 +670,10 @@ class ParameterPanel(QWidget):
         for name, value in builder_defaults.items():
             if value is None:
                 # Use safe defaults for controls that can't handle None
-                if name in ["colorval", "grayval"]:
-                    safe_defaults[name] = 0.0
+                if name == "colorval":
+                    safe_defaults[name] = 15.0
+                elif name == "grayval":
+                    safe_defaults[name] = 14.0
                 # Skip other None values - controls will keep their current values
             else:
                 safe_defaults[name] = value
@@ -638,7 +708,8 @@ class ParameterPanel(QWidget):
                 if 'output_path' not in params:
                     params['output_path'] = 'output.tif'
                 
-                command_list = command_builder.build_command(params)
+                # Skip file validation for display purposes
+                command_list = command_builder.build_command(params, validate_files=False)
             except Exception as e:
                 self.command_display.setPlainText(f"Error generating command: {e}")
                 return

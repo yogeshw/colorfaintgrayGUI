@@ -38,20 +38,21 @@ class CommandBuilder:
         """
         self.astscript_path = astscript_path
     
-    def build_command(self, params: Dict[str, Any]) -> List[str]:
+    def build_command(self, params: Dict[str, Any], validate_files: bool = True) -> List[str]:
         """Build complete command line from parameters.
         
         Args:
             params: Dictionary containing all parameters
+            validate_files: Whether to validate that input files exist
             
         Returns:
             List of command line arguments
             
         Raises:
-            ValueError: If required parameters are missing
+            ValueError: If required parameters are missing or files don't exist (when validate_files=True)
         """
         # Validate required parameters
-        self._validate_required_params(params)
+        self._validate_required_params(params, validate_files)
         
         # Start with base command
         cmd = [self.astscript_path]
@@ -71,16 +72,16 @@ class CommandBuilder:
             cmd.extend(['--output', params['output_path']])
         
         # Add core transformation parameters
-        if params.get('qbright') is not None and params['qbright'] != 1.0:
+        if params.get('qbright') is not None and params['qbright'] != 50.0:
             cmd.extend(['--qbright', str(params['qbright'])])
         
-        if params.get('stretch') is not None and params['stretch'] != 1.0:
+        if params.get('stretch') is not None and params['stretch'] != 0.1:
             cmd.extend(['--stretch', str(params['stretch'])])
         
-        if params.get('contrast') is not None and params['contrast'] != 3.0:
+        if params.get('contrast') is not None and params['contrast'] != 4.0:
             cmd.extend(['--contrast', str(params['contrast'])])
         
-        if params.get('gamma') is not None and params['gamma'] != 0.8:
+        if params.get('gamma') is not None and params['gamma'] != 0.5:
             cmd.extend(['--gamma', str(params['gamma'])])
         
         # Add brightness limit parameters
@@ -143,14 +144,15 @@ class CommandBuilder:
         
         return cmd
     
-    def _validate_required_params(self, params: Dict[str, Any]) -> None:
+    def _validate_required_params(self, params: Dict[str, Any], validate_files: bool = True) -> None:
         """Validate that required parameters are present.
         
         Args:
             params: Parameters dictionary
+            validate_files: Whether to validate that input files exist
             
         Raises:
-            ValueError: If required parameters are missing
+            ValueError: If required parameters are missing or files don't exist (when validate_files=True)
         """
         required = ['red_path', 'green_path', 'blue_path']
         missing = [p for p in required if p not in params or not params[p]]
@@ -158,22 +160,24 @@ class CommandBuilder:
         if missing:
             raise ValueError(f"Missing required parameters: {missing}")
         
-        # Check that input files exist
-        for param in required:
-            path = params[param]
-            if not os.path.exists(path):
-                raise ValueError(f"Input file does not exist: {path}")
+        # Check that input files exist only if validation is requested
+        if validate_files:
+            for param in required:
+                path = params[param]
+                if not os.path.exists(path):
+                    raise ValueError(f"Input file does not exist: {path}")
     
-    def format_command_string(self, params: Dict[str, Any]) -> str:
+    def format_command_string(self, params: Dict[str, Any], validate_files: bool = True) -> str:
         """Format command as a single string for display.
         
         Args:
             params: Parameters dictionary
+            validate_files: Whether to validate that input files exist
             
         Returns:
             Command as a formatted string
         """
-        cmd_list = self.build_command(params)
+        cmd_list = self.build_command(params, validate_files)
         
         # Format for readability with line breaks
         formatted_parts = []
@@ -209,15 +213,15 @@ class CommandBuilder:
             Dictionary with default parameter values
         """
         return {
-            'qbright': 1.0,
-            'stretch': 1.0,
-            'contrast': 3.0,
-            'gamma': 0.8,
+            'qbright': 50.0,
+            'stretch': 0.1,
+            'contrast': 4.0,
+            'gamma': 0.5,
             'minimum': None,
             'maximum': None,
             'zeropoint': None,
-            'colorval': None,  # Auto-estimated by script
-            'grayval': None,   # Auto-estimated by script
+            'colorval': 15.0,  # Color threshold
+            'grayval': 14.0,   # Gray threshold
             'coloronly': False,
             'quality': 95,
             'hdu': None,
@@ -239,8 +243,8 @@ class CommandBuilder:
         
         # Validate numeric ranges
         if 'qbright' in params and params['qbright'] is not None:
-            if not (0.0 <= params['qbright'] <= 10.0):
-                errors.append("qbright must be between 0.0 and 10.0")
+            if not (0.0 <= params['qbright'] <= 100.0):
+                errors.append("qbright must be between 0.0 and 100.0")
         
         if 'stretch' in params and params['stretch'] is not None:
             if params['stretch'] < 0:

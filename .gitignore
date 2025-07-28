@@ -2,3 +2,5 @@ cache
 __pycache__
 mosaic*.fits
 cutouts
+test_gui_defaults.py
+verify_defaults.py

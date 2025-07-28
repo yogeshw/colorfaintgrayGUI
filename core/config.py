@@ -44,27 +44,31 @@ class Config:
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.config_file = self.config_dir / "config.json"
         
-        # Default configuration
+        # Default configuration - separated into persistent and non-persistent settings
         self.defaults = {
-            # astscript-color-faint-gray default parameters
+            # These are the default parameters for astscript-color-faint-gray
+            # but they are NOT persisted in config file unless explicitly saved as presets
             "parameters": {
-                "qbright": 1.0,
-                "stretch": 1.0,
-                "contrast": 3.0,
-                "gamma": 0.8,
+                "qbright": 50.0,
+                "stretch": 0.1,
+                "contrast": 4.0,
+                "gamma": 0.5,
                 "minimum": None,
                 "maximum": None,
                 "zeropoint": None,
-                "colorval": None,  # Auto-estimated by script
-                "grayval": None,   # Auto-estimated by script
+                "colorval": 15.0,  # Color threshold
+                "grayval": 14.0,   # Gray threshold
                 "coloronly": False,
                 "quality": 95,
                 "hdu": None,
                 "tmpdir": None,
                 "keeptmp": False,
                 "checkparams": False
-            },
-            
+            }
+        }
+        
+        # Persistent settings that ARE saved to config file
+        self.persistent_defaults = {
             # Application settings
             "app": {
                 "cache_size": 25,
@@ -88,21 +92,21 @@ class Config:
             }
         }
         
-        # Load existing configuration
+        # Load existing configuration (only persistent settings)
         self.config = self._load_config()
     
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from file."""
+        """Load configuration from file (only persistent settings)."""
         if self.config_file.exists():
             try:
                 with open(self.config_file, 'r') as f:
                     config = json.load(f)
-                # Merge with defaults to ensure all keys exist
-                return self._merge_configs(self.defaults, config)
+                # Merge only persistent settings with defaults
+                return self._merge_configs(self.persistent_defaults, config)
             except (json.JSONDecodeError, IOError) as e:
                 print(f"Warning: Failed to load config file: {e}")
         
-        return self.defaults.copy()
+        return self.persistent_defaults.copy()
     
     def _merge_configs(self, default: Dict, loaded: Dict) -> Dict:
         """Recursively merge loaded config with defaults."""
@@ -162,16 +166,20 @@ class Config:
         config[keys[-1]] = value
     
     def get_parameters(self) -> Dict[str, Any]:
-        """Get astscript-color-faint-gray parameters."""
-        return self.config["parameters"].copy()
+        """Get astscript-color-faint-gray parameters (always returns defaults, not persisted)."""
+        return self.defaults["parameters"].copy()
     
     def set_parameters(self, params: Dict[str, Any]):
-        """Set astscript-color-faint-gray parameters."""
-        self.config["parameters"].update(params)
+        """Set astscript-color-faint-gray parameters (no-op since parameters are not persisted)."""
+        # Parameters are not persisted in the config file
+        # This method is kept for compatibility but does nothing
+        pass
     
     def reset_parameters(self):
-        """Reset parameters to defaults."""
-        self.config["parameters"] = self.defaults["parameters"].copy()
+        """Reset parameters to defaults (no-op since parameters are not persisted)."""
+        # Parameters are not persisted in the config file
+        # This method is kept for compatibility but does nothing
+        pass
     
     def get_cache_dir(self) -> Path:
         """Get cache directory path."""

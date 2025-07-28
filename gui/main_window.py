@@ -578,10 +578,10 @@ class MainWindow(QMainWindow):
         self.config.set("app.window_geometry", base64.b64encode(geometry).decode('utf-8'))
         self.config.set("app.window_state", base64.b64encode(state).decode('utf-8'))
         
-        # Save current parameters
-        self.config.set_parameters(self.current_parameters)
+        # Note: Parameters are no longer saved automatically
+        # They are only saved/loaded through explicit preset functionality
         
-        # Save configuration
+        # Save configuration (only UI settings, not parameters)
         self.config.save()
     
     def closeEvent(self, event):
