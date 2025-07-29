@@ -4,3 +4,7 @@ mosaic*.fits
 cutouts
 test_gui_defaults.py
 verify_defaults.py
+docs/*.aux
+docs/*.log
+docs/*.toc
+docs/*.out

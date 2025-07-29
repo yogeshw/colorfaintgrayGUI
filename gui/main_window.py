@@ -685,18 +685,21 @@ class MainWindow(QMainWindow):
             # Rebuild the command from the cache entry parameters
             from core.command_builder import CommandBuilder
             command_builder = CommandBuilder()
-            
+
             # Add the file paths from the cache entry
             params = entry.parameters.copy()
             if hasattr(entry, 'input_files'):
                 input_files = entry.input_files
+                def get_file(key):
+                    # Try both 'red' and 'red_path' style keys
+                    return input_files.get(key) or input_files.get(f"{key}_path")
                 params.update({
-                    'red_path': input_files.get('red', 'R.fits'),
-                    'green_path': input_files.get('green', 'G.fits'),
-                    'blue_path': input_files.get('blue', 'B.fits'),
+                    'red_path': get_file('red'),
+                    'green_path': get_file('green'),
+                    'blue_path': get_file('blue'),
                     'output_path': entry.image_path
                 })
-            
+
             command_list = command_builder.build_command(params)
             self.parameter_panel.update_command_display(command_list)
         except Exception as e:

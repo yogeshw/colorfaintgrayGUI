@@ -1,0 +1,1047 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+% Page setup
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+% Code listings setup
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    showstringspaces=false
+}
+
+% Headers and footers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{ColorFaintGray GUI Manual}
+\fancyhead[R]{v1.0}
+\fancyfoot[C]{\thepage}
+
+\title{\textbf{ColorFaintGray GUI}\\
+\large{User Manual and Reference Guide}}
+\author{Yogesh Wadadekar\\
+\small{Development Year: 2025}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+ColorFaintGray GUI is a PyQt6-based graphical interface for GNU Astronomy
+Utilities' \texttt{astscript-color-faint-gray} script. This application
+enables astronomers to create high-quality color astronomical images from
+separate R, G, and B channel FITS files using an intuitive interface with
+advanced parameter controls, image caching, comparison tools, and
+comprehensive workflow management. The interface addresses the challenge of
+visualizing the full dynamic range of astronomical data by implementing the
+asinh transformation technique with grayscale backgrounds for faint
+features.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Overview}
+
+Astronomical images span an enormous dynamic range, from bright stellar cores
+with high signal-to-noise ratios to faint diffuse structures barely above
+the noise level. Traditional color imaging techniques often saturate bright
+regions or lose faint details in black backgrounds. ColorFaintGray GUI
+addresses this fundamental challenge by providing an intuitive interface to
+the powerful \texttt{astscript-color-faint-gray} algorithm.
+
+The application implements the asinh transformation technique described by
+Lupton et al. (2004)\footnote{Lupton, R., Blanton, M. R., Fekete, G., et
+al. 2004, PASP, 116, 133} for bright regions while using inverse grayscale
+for noisy background areas. This approach, detailed in Infante-Sainz \&
+Akhlaghi (2024)\footnote{Infante-Sainz, R. and Akhlaghi, M. 2024, Research
+Notes of the AAS, 8, 10}, enables simultaneous visualization of both high
+and low surface brightness features within the same image.
+
+\begin{figure}[H]
+\centering
+% Placeholder for main interface screenshot
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{3cm}
+\textit{[Screenshot: Main application interface showing parameter panel,
+tabbed workspace, and generated color image]}
+\vspace{3cm}
+}}
+\caption{Main ColorFaintGray GUI interface with parameter controls on the
+left and tabbed workspace on the right.}
+\label{fig:main-interface}
+\end{figure}
+
+\subsection{Key Features}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Intuitive Parameter Control}: Real-time adjustment of asinh
+transformation parameters with immediate visual feedback
+\item \textbf{Automatic Image Caching}: All generated images are cached
+with metadata for easy comparison and workflow management
+\item \textbf{Multi-Image Comparison}: Side-by-side comparison of up to 6
+different parameter combinations
+\item \textbf{Preset Management}: Save and load parameter combinations for
+different object types
+\item \textbf{Command Integration}: View and copy exact command-line
+equivalents for reproducible workflows
+\item \textbf{Advanced Visualization}: Support for both traditional color
+and innovative grayscale background modes
+\end{itemize}
+
+\section{Installation and Setup}
+
+\subsection{System Requirements}
+
+\begin{itemize}[leftmargin=*]
+\item Python 3.12 or later
+\item PyQt6 $\geq$ 6.5.0
+\item GNU Astronomy Utilities with \texttt{astscript-color-faint-gray}
+\item Scientific Python packages: numpy, astropy, matplotlib, Pillow
+\item Sufficient disk space for image caching (recommended: 1GB+)
+\end{itemize}
+
+\subsection{Installation Process}
+
+\begin{enumerate}
+\item \textbf{Verify GNU Astronomy Utilities}:
+\begin{lstlisting}[language=bash]
+which astscript-color-faint-gray
+astscript-color-faint-gray --help
+\end{lstlisting}
+
+\item \textbf{Install Python Dependencies}:
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt
+\end{lstlisting}
+
+\item \textbf{Launch Application}:
+\begin{lstlisting}[language=bash]
+python main.py
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Configuration}
+
+The application creates a configuration directory at
+\texttt{\~{}/.config/astscript-color-faint-gray/} containing:
+
+\begin{itemize}[leftmargin=*]
+\item \texttt{config.json}: Application settings and defaults
+\item \texttt{presets/}: Saved parameter presets
+\item \texttt{command\_history.json}: Command execution history
+\end{itemize}
+
+\section{Interface Overview}
+
+\subsection{Main Components}
+
+The ColorFaintGray GUI features a modern tabbed interface with five primary
+areas:
+
+\subsubsection{Parameter Panel (Left Side)}
+
+The parameter panel contains all image processing controls organized into
+collapsible sections:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Basic Parameters}: Core transformation controls (qbright,
+stretch, contrast, gamma)
+\item \textbf{Advanced Parameters}: Color/grayscale thresholds and quality
+settings
+\item \textbf{Output Settings}: File format and destination options
+\item \textbf{Command Display}: Real-time command preview
+\item \textbf{Action Buttons}: Generate, Reset, Preset management
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+% Placeholder for parameter panel screenshot
+\fbox{\parbox{0.4\textwidth}{\centering
+\vspace{4cm}
+\textit{[Screenshot: Parameter panel showing basic and advanced controls]}
+\vspace{4cm}
+}}
+\caption{Parameter panel with basic and advanced control sections.}
+\label{fig:parameter-panel}
+\end{figure}
+
+\subsubsection{Tabbed Workspace (Center)}
+
+The main workspace consists of four specialized tabs:
+
+\paragraph{Image Loader Tab}
+Handles input file selection and validation:
+\begin{itemize}[leftmargin=*]
+\item Individual file browsers for R, G, B channels
+\item Automatic FITS validation with status indicators
+\item File information display with dimensions and statistics
+\item Optional thumbnail previews for each channel
+\end{itemize}
+
+\paragraph{Preview Tab}
+Interactive display of generated images:
+\begin{itemize}[leftmargin=*]
+\item High-quality rendering with smooth zooming
+\item Mouse wheel zoom with cursor-centered scaling
+\item Click-and-drag panning for large images
+\item Image metadata overlay and statistics
+\end{itemize}
+
+\paragraph{Cache Grid Tab}
+Thumbnail browser for cached images:
+\begin{itemize}[leftmargin=*]
+\item Grid layout of automatically generated thumbnails
+\item Click thumbnails to restore parameters and view full images
+\item Search and filter capabilities
+\item Cache management and export tools
+\end{itemize}
+
+\paragraph{Compare Tab}
+Multi-image comparison interface:
+\begin{itemize}[leftmargin=*]
+\item Side-by-side display of up to 6 images
+\item Synchronized zooming and panning
+\item Parameter difference analysis
+\item Export comparison data
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+% Placeholder for tabbed interface screenshot
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{3cm}
+\textit{[Screenshot: Four-tab interface showing Image Loader, Preview,
+Cache Grid, and Compare tabs]}
+\vspace{3cm}
+}}
+\caption{Main tabbed workspace showing all four interface tabs.}
+\label{fig:tabs-interface}
+\end{figure}
+
+\section{Basic Workflow}
+
+\subsection{Loading Images}
+
+\begin{enumerate}
+\item Navigate to the \textbf{Image Loader} tab (active by default)
+\item Click \textbf{Browse} buttons to select FITS files for each channel:
+   \begin{itemize}
+   \item \textbf{R Channel}: Red wavelength data (e.g., r-band, I-band)
+   \item \textbf{G Channel}: Green wavelength data (e.g., g-band, V-band)
+   \item \textbf{B Channel}: Blue wavelength data (e.g., u-band, B-band)
+   \end{itemize}
+\item Verify successful loading via green checkmark indicators
+\item Review file information in the details panel
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+% Placeholder for image loader screenshot
+\fbox{\parbox{0.7\textwidth}{\centering
+\vspace{3cm}
+\textit{[Screenshot: Image Loader tab with three loaded FITS files showing
+checkmarks and file information]}
+\vspace{3cm}
+}}
+\caption{Image Loader tab with successfully loaded R, G, B channel files.}
+\label{fig:image-loader}
+\end{figure}
+
+\textbf{Important Considerations}:
+\begin{itemize}[leftmargin=*]
+\item All images must have identical dimensions
+\item Compatible world coordinate systems are recommended
+\item Properly calibrated data (flat-fielded, dark-subtracted) yields best
+results
+\end{itemize}
+
+\subsection{Parameter Adjustment}
+
+The asinh transformation is controlled by four primary parameters:
+
+\subsubsection{Basic Parameters}
+
+\paragraph{qbright (0--100, default: 1.0)}
+Controls enhancement of bright features. Higher values make bright regions
+(star cores, galaxy centers) more prominent while preserving color balance.
+
+\paragraph{stretch (0--100, default: 1.0)}
+Linear stretching parameter for faint features. Increasing this value
+reveals more faint background details and diffuse structures.
+
+\paragraph{contrast (0--100, default: 3.0)}
+Linear contrast adjustment applied globally. Higher values increase overall
+image contrast without affecting the asinh transformation.
+
+\paragraph{gamma (0.1--10.0, default: 0.8)}
+Nonlinear brightness adjustment using gamma correction. Values $> 1$
+brighten the image, $< 1$ darken it. Applied after linear processing.
+
+\subsubsection{Advanced Parameters}
+
+\paragraph{colorval (auto-estimated)}
+Threshold separating color and black regions. Pixels above this value
+appear in full color using RGB data.
+
+\paragraph{grayval (auto-estimated)}
+Threshold separating black and grayscale regions. Pixels below this value
+appear in inverse grayscale.
+
+\paragraph{coloronly (checkbox, default: false)}
+When enabled, eliminates grayscale regions entirely. Background appears
+either in color or pure black.
+
+\begin{figure}[H]
+\centering
+% Placeholder for parameter effects illustration
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{4cm}
+\textit{[Figure: Grid showing same galaxy with different parameter values
+demonstrating effects of qbright, stretch, gamma adjustments]}
+\vspace{4cm}
+}}
+\caption{Parameter effects demonstration: same input with varying qbright,
+stretch, and gamma values.}
+\label{fig:parameter-effects}
+\end{figure}
+
+\subsection{Image Generation}
+
+\begin{enumerate}
+\item Ensure all three channel files are loaded and validated
+\item Adjust parameters as desired using the Parameter Panel
+\item Click the large green \textbf{Generate Image} button
+\item Monitor progress in the progress dialog
+\item Review results in the automatically opened Preview tab
+\end{enumerate}
+
+Alternative generation methods:
+\begin{itemize}[leftmargin=*]
+\item Keyboard: F5 or Ctrl+G
+\item Menu: Tools $\rightarrow$ Generate Image
+\end{itemize}
+
+\subsection{Viewing and Evaluation}
+
+The Preview tab provides comprehensive image viewing capabilities:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Zoom}: Mouse wheel for cursor-centered scaling
+\item \textbf{Pan}: Left-click drag to navigate large images
+\item \textbf{Fit}: Right-click menu option to fit image to window
+\item \textbf{Information}: Pixel values and coordinates on mouse hover
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+% Placeholder for preview tab screenshot
+\fbox{\parbox{0.7\textwidth}{\centering
+\vspace{3cm}
+\textit{[Screenshot: Preview tab showing generated color image with zoom
+controls and information overlay]}
+\vspace{3cm}
+}}
+\caption{Preview tab displaying generated color image with interactive
+viewing controls.}
+\label{fig:preview-tab}
+\end{figure}
+
+\section{Advanced Features}
+
+\subsection{Image Caching System}
+
+All generated images are automatically cached with complete metadata:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Automatic Storage}: Images saved as high-quality TIFF files
+\item \textbf{Thumbnail Generation}: PNG thumbnails for quick browsing
+\item \textbf{Parameter Preservation}: Exact parameter values stored
+\item \textbf{Command History}: Complete command-line equivalents saved
+\item \textbf{Configurable Limits}: Default 25 images (adjustable in
+settings)
+\end{itemize}
+
+\subsubsection{Cache Grid Navigation}
+
+The Cache Grid tab displays all cached images as interactive thumbnails:
+
+\begin{enumerate}
+\item Click any thumbnail to view full-size image in Preview tab
+\item Parameters are automatically restored to the Parameter Panel
+\item Right-click thumbnails for context menu options:
+   \begin{itemize}
+   \item Add to Comparison
+   \item Copy Command
+   \item Show Information
+   \item Delete Entry
+   \end{itemize}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+% Placeholder for cache grid screenshot
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{3cm}
+\textit{[Screenshot: Cache Grid tab showing thumbnails of multiple cached
+images with timestamps and parameter summaries]}
+\vspace{3cm}
+}}
+\caption{Cache Grid tab displaying thumbnails of automatically cached
+images.}
+\label{fig:cache-grid}
+\end{figure}
+
+\subsection{Multi-Image Comparison}
+
+The Compare tab enables systematic evaluation of different parameter
+combinations:
+
+\subsubsection{Adding Images to Comparison}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{From Current}: Tools $\rightarrow$ Add Current to Comparison
+(Ctrl+M)
+\item \textbf{From Cache}: Right-click thumbnail $\rightarrow$ Add to
+Comparison
+\item \textbf{Direct Generation}: Generate with different parameters and
+add each result
+\end{itemize}
+
+\subsubsection{Comparison Features}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Layout Options}: Grid (2×3), horizontal, or vertical
+arrangements
+\item \textbf{Synchronized Viewing}: Optional synchronized zoom and pan
+across all images
+\item \textbf{Parameter Analysis}: Automatic detection and highlighting of
+parameter differences
+\item \textbf{Export Options}: Save comparison images and analysis data
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+% Placeholder for comparison interface screenshot
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{4cm}
+\textit{[Screenshot: Compare tab showing 4 images side-by-side with
+parameter difference analysis panel]}
+\vspace{4cm}
+}}
+\caption{Multi-image comparison interface with parameter difference
+analysis.}
+\label{fig:comparison}
+\end{figure}
+
+\subsection{Preset Management}
+
+Presets enable efficient reuse of successful parameter combinations:
+
+\subsubsection{Creating Presets}
+
+\begin{enumerate}
+\item Adjust parameters to desired values in Parameter Panel
+\item Access: Presets $\rightarrow$ Save Current as Preset (Ctrl+Shift+S)
+\item Enter descriptive name and optional description
+\item Preset saved as JSON file in configuration directory
+\end{enumerate}
+
+\subsubsection{Using Presets}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Quick Load}: Preset dropdown in Parameter Panel
+\item \textbf{Management}: Presets $\rightarrow$ Manage Presets (Ctrl+P)
+\item \textbf{Import/Export}: Share presets between users
+\end{itemize}
+
+\subsubsection{Recommended Preset Categories}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Galaxies}: Enhanced faint structure visibility
+\item \textbf{Star Fields}: Optimized stellar color representation
+\item \textbf{Nebulae}: Balanced emission and reflection regions
+\item \textbf{Deep Field}: Maximum faint feature enhancement
+\end{itemize}
+
+\section{Parameter Reference}
+
+\subsection{Mathematical Foundation}
+
+The asinh transformation implements the algorithm described by Lupton et al.
+(2004):
+
+\begin{equation}
+I_{rgb} = \frac{R + G + B}{3}
+\end{equation}
+
+\begin{equation}
+f = \frac{\text{asinh}(\alpha \cdot q \cdot I_{rgb})}{\alpha}
+\end{equation}
+
+where $\alpha$ is the stretch parameter and $q$ is the qbright parameter.
+
+Each channel is then scaled by:
+
+\begin{equation}
+\text{Channel}_{out} = \text{Channel}_{in} \times \frac{f}{I_{rgb}}
+\end{equation}
+
+\subsection{Parameter Effects and Ranges}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+Parameter & Range & Default & Primary Effect \\
+\midrule
+qbright & 0.001--100 & 1.0 & Bright feature enhancement \\
+stretch & 0.001--100 & 1.0 & Faint feature visibility \\
+contrast & 0.1--10 & 3.0 & Linear contrast scaling \\
+gamma & 0.1--10 & 0.8 & Nonlinear brightness curve \\
+colorval & auto & computed & Color/black threshold \\
+grayval & auto & computed & Black/gray threshold \\
+quality & 1--100 & 95 & Output image quality \\
+\bottomrule
+\end{tabular}
+\caption{Parameter ranges and effects summary.}
+\label{tab:parameters}
+\end{table}
+
+\subsection{Object-Specific Recommendations}
+
+\subsubsection{Galaxies and Extended Objects}
+
+Optimal for revealing faint outer structure and tidal streams:
+
+\begin{itemize}[leftmargin=*]
+\item qbright: 1.0--2.0 (moderate bright enhancement)
+\item stretch: 1.5--3.0 (strong faint feature enhancement)
+\item gamma: 0.7--0.9 (slight darkening for better contrast)
+\item coloronly: false (preserve grayscale backgrounds)
+\end{itemize}
+
+\subsubsection{Star Fields and Clusters}
+
+Emphasizes stellar colors while maintaining photometric accuracy:
+
+\begin{itemize}[leftmargin=*]
+\item qbright: 0.5--1.0 (avoid oversaturation)
+\item stretch: 0.8--1.5 (moderate faint enhancement)
+\item gamma: 0.8--1.0 (preserve stellar brightness relationships)
+\item contrast: 2.0--3.0 (maintain color accuracy)
+\end{itemize}
+
+\subsubsection{Nebulae and Emission Regions}
+
+Balances emission lines with continuum features:
+
+\begin{itemize}[leftmargin=*]
+\item qbright: 1.0--1.5 (reveal internal structure)
+\item stretch: 2.0--4.0 (show faint emission)
+\item gamma: 0.6--0.8 (darken to enhance contrast)
+\item colorval: 0.1--0.5 (adjust color/gray balance)
+\end{itemize}
+
+\section{Command-Line Integration}
+
+\subsection{Command Display and History}
+
+The Parameter Panel continuously displays the equivalent command-line
+invocation:
+
+\begin{lstlisting}[language=bash]
+astscript-color-faint-gray -g 0 \
+  input_r.fits input_g.fits input_b.fits \
+  --qbright 1.5 --stretch 2.0 --contrast 3.0 \
+  --gamma 0.8 --output color_image.pdf
+\end{lstlisting}
+
+\subsubsection{Command History Access}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{View History}: Tools $\rightarrow$ Command History (Ctrl+H)
+\item \textbf{Copy Current}: Tools $\rightarrow$ Copy Current Command
+(Ctrl+Shift+C)
+\item \textbf{Export History}: Save complete command log for documentation
+\end{itemize}
+
+\subsection{Batch Processing Integration}
+
+Commands copied from the GUI can be used for automated processing:
+
+\begin{lstlisting}[language=bash]
+#!/bin/bash
+# Batch process multiple image sets using GUI-optimized parameters
+
+# Parameters optimized in GUI for galaxy fields
+GALAXY_PARAMS="--qbright 1.5 --stretch 2.2 --gamma 0.8"
+
+# Process multiple fields
+for field in field1 field2 field3; do
+    astscript-color-faint-gray -g 0 \
+        ${field}_r.fits ${field}_g.fits ${field}_b.fits \
+        $GALAXY_PARAMS --output ${field}_color.pdf
+done
+\end{lstlisting}
+
+\section{Color Science and Visualization}
+
+\subsection{Dynamic Range Challenge}
+
+Astronomical images typically exhibit pixel value distributions spanning 4-6
+orders of magnitude. The ColorFaintGray approach addresses this by:
+
+\begin{enumerate}
+\item \textbf{Bright Regions}: Asinh transformation preserves colors while
+preventing saturation
+\item \textbf{Intermediate Regions}: Smooth transition to pure black
+\item \textbf{Faint Regions}: Inverse grayscale reveals low surface
+brightness features
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+% Placeholder for dynamic range illustration
+\fbox{\parbox{0.8\textwidth}{\centering
+\vspace{3cm}
+\textit{[Figure: Same astronomical field shown with traditional black
+background vs. ColorFaintGray technique, highlighting revealed faint
+structures]}
+\vspace{3cm}
+}}
+\caption{Dynamic range comparison: traditional color (left) vs.
+ColorFaintGray technique (right) showing revealed faint structures.}
+\label{fig:dynamic-range}
+\end{figure}
+
+\subsection{Color Accuracy Considerations}
+
+\subsubsection{Photometric Calibration}
+
+For scientifically accurate colors:
+
+\begin{itemize}[leftmargin=*]
+\item Use properly calibrated input images with consistent zero points
+\item Apply appropriate weight values for different filter sensitivities
+\item Consider atmospheric extinction corrections
+\item Validate colors against known stellar standards
+\end{itemize}
+
+\subsubsection{Perceptual Adjustments}
+
+The gamma parameter enables perceptual optimization:
+
+\begin{itemize}[leftmargin=*]
+\item Gamma = 1.0: Linear relationship (photometrically accurate)
+\item Gamma < 1.0: Emphasizes faint features (better for extended objects)
+\item Gamma > 1.0: Enhances bright regions (suitable for stellar fields)
+\end{itemize}
+
+\section{Troubleshooting}
+
+\subsection{Common Issues and Solutions}
+
+\subsubsection{Installation Problems}
+
+\textbf{``astscript-color-faint-gray not found''}
+\begin{itemize}[leftmargin=*]
+\item Verify GNU Astronomy Utilities installation
+\item Check PATH environment variable
+\item Test manual execution: \texttt{astscript-color-faint-gray --help}
+\end{itemize}
+
+\textbf{Python dependency errors}
+\begin{itemize}[leftmargin=*]
+\item Ensure Python 3.12+ is installed
+\item Verify PyQt6 installation: \texttt{python -c "import PyQt6"}
+\item Reinstall requirements: \texttt{pip install -r requirements.txt
+--upgrade}
+\end{itemize}
+
+\subsubsection{File Loading Issues}
+
+\textbf{``Invalid FITS File'' errors}
+\begin{itemize}[leftmargin=*]
+\item Verify file integrity with \texttt{astropy.io.fits}
+\item Check for proper FITS headers and image extensions
+\item Ensure files contain image data (not tables or spectra)
+\end{itemize}
+
+\textbf{``Dimension Mismatch'' errors}
+\begin{itemize}[leftmargin=*]
+\item All three input files must have identical pixel dimensions
+\item Use \texttt{astinfo} to check image sizes
+\item Resample images to common pixel grid if necessary
+\end{itemize}
+
+\subsubsection{Generation Failures}
+
+\textbf{Parameter validation errors}
+\begin{itemize}[leftmargin=*]
+\item Ensure qbright and stretch are not zero
+\item Check that all parameters are within valid ranges
+\item Reset to defaults and adjust incrementally
+\end{itemize}
+
+\textbf{Memory or performance issues}
+\begin{itemize}[leftmargin=*]
+\item Use smaller test images for parameter optimization
+\item Ensure adequate free disk space for temporary files
+\item Close other memory-intensive applications
+\end{itemize}
+
+\subsection{Performance Optimization}
+
+\subsubsection{Image Size Considerations}
+
+Processing time scales approximately with the square of linear image
+dimension:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+Image Size & Typical Processing Time & Memory Usage \\
+\midrule
+1000×1000 & 10--30 seconds & 100--200 MB \\
+2000×2000 & 1--2 minutes & 400--800 MB \\
+4000×4000 & 5--10 minutes & 1.5--3 GB \\
+8000×8000 & 20--40 minutes & 6--12 GB \\
+\bottomrule
+\end{tabular}
+\caption{Performance scaling with image size.}
+\label{tab:performance}
+\end{table}
+
+\subsubsection{Workflow Optimization}
+
+\begin{enumerate}
+\item \textbf{Parameter Development}: Use heavily binned or cropped images
+for initial parameter exploration
+\item \textbf{Cache Utilization}: Leverage automatic caching to avoid
+regenerating identical images
+\item \textbf{Batch Processing}: Export optimized commands for processing
+multiple similar datasets
+\end{enumerate}
+
+\section{Best Practices and Workflow}
+
+\subsection{Recommended Workflow}
+
+\begin{enumerate}
+\item \textbf{Preparation Phase}:
+   \begin{itemize}
+   \item Ensure input images are properly calibrated
+   \item Verify consistent photometric calibration across channels
+   \item Create working copies of original data
+   \end{itemize}
+
+\item \textbf{Initial Parameter Exploration}:
+   \begin{itemize}
+   \item Start with default parameters
+   \item Generate initial image to assess overall appearance
+   \item Use Cache Grid to track parameter experiments
+   \end{itemize}
+
+\item \textbf{Systematic Optimization}:
+   \begin{itemize}
+   \item Adjust qbright first to optimize bright feature appearance
+   \item Fine-tune stretch to reveal desired faint structure level
+   \item Use gamma for overall brightness balance
+   \item Adjust color/gray thresholds if needed
+   \end{itemize}
+
+\item \textbf{Comparison and Validation}:
+   \begin{itemize}
+   \item Use Compare tab to evaluate different approaches
+   \item Generate images with slight parameter variations
+   \item Validate colors against known standards
+   \end{itemize}
+
+\item \textbf{Final Production}:
+   \begin{itemize}
+   \item Generate high-quality image with optimized parameters
+   \item Save successful parameter set as named preset
+   \item Export command for documentation and reproducibility
+   \end{itemize}
+\end{enumerate}
+
+\subsection{Quality Control Guidelines}
+
+\subsubsection{Scientific Accuracy}
+
+\begin{itemize}[leftmargin=*]
+\item Verify that stellar colors match expected values for known star types
+\item Check that galaxy colors are consistent with morphological types
+\item Ensure that color gradients are astrophysically meaningful
+\item Validate against published color-magnitude diagrams when possible
+\end{itemize}
+
+\subsubsection{Aesthetic Considerations}
+
+\begin{itemize}[leftmargin=*]
+\item Balance between scientific accuracy and visual appeal
+\item Avoid over-stretching that introduces noise artifacts
+\item Ensure smooth transitions between color, black, and gray regions
+\item Consider the intended audience (scientific vs. outreach)
+\end{itemize}
+
+\subsection{Documentation and Reproducibility}
+
+\subsubsection{Parameter Recording}
+
+Always document successful parameter combinations:
+
+\begin{itemize}[leftmargin=*]
+\item Save parameters as named presets with descriptive names
+\item Copy and save the exact command used for each final image
+\item Record the rationale for parameter choices
+\item Note any special considerations for the dataset
+\end{itemize}
+
+\subsubsection{Data Provenance}
+
+Maintain complete records of the image processing chain:
+
+\begin{itemize}[leftmargin=*]
+\item Original data sources and observation details
+\item Calibration procedures applied before ColorFaintGray processing
+\item Complete ColorFaintGray command with all parameters
+\item Software versions (Gnuastro, ColorFaintGray GUI, Python, PyQt6)
+\end{itemize}
+
+\section{Keyboard Shortcuts}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+Action & Shortcut \\
+\midrule
+Generate Image & F5, Ctrl+G \\
+Open Images & Ctrl+O \\
+Save Image & Ctrl+S \\
+Reset Parameters & Ctrl+R \\
+Manage Presets & Ctrl+P \\
+Save Current as Preset & Ctrl+Shift+S \\
+Command History & Ctrl+H \\
+Copy Current Command & Ctrl+Shift+C \\
+Add to Comparison & Ctrl+M \\
+Switch to Image Loader & Ctrl+1 \\
+Switch to Preview & Ctrl+2 \\
+Switch to Cache Grid & Ctrl+3 \\
+Switch to Compare & Ctrl+4 \\
+Toggle Parameter Panel & F9 \\
+Application Help & F1 \\
+\bottomrule
+\end{tabular}
+\caption{Complete keyboard shortcut reference.}
+\label{tab:shortcuts}
+\end{table}
+
+\section{Technical Implementation}
+
+\subsection{Software Architecture}
+
+ColorFaintGray GUI is built using a modular architecture:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Core Module}: Parameter management, command building, image
+caching
+\item \textbf{GUI Module}: PyQt6-based interface components
+\item \textbf{Utils Module}: File handling, error management, configuration
+\end{itemize}
+
+\subsection{File Formats and Standards}
+
+\subsubsection{Input Formats}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{FITS}: Primary format, single or multi-extension
+\item \textbf{HDU Support}: Flexible HDU specification for complex files
+\item \textbf{World Coordinates}: Preserves astrometric information when
+present
+\end{itemize}
+
+\subsubsection{Output Formats}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Cache}: High-quality TIFF files for internal storage
+\item \textbf{Export}: PDF (default), PNG, JPEG, TIFF options
+\item \textbf{Metadata}: JSON format for parameter and command storage
+\end{itemize}
+
+\subsection{Performance Characteristics}
+
+\subsubsection{Memory Usage}
+
+\begin{itemize}[leftmargin=*]
+\item Base application: 50--100 MB
+\item Per image processing: $\sim$3× input file size
+\item Cache storage: Configurable, default 25 images
+\item Peak memory: Depends on largest processed image
+\end{itemize}
+
+\subsubsection{Processing Pipeline}
+
+\begin{enumerate}
+\item Input validation and file loading
+\item Optional minimum value clipping
+\item Weight and zero-point scaling
+\item RGB mean calculation (stacking)
+\item Asinh transformation application
+\item Individual channel scaling
+\item Maximum normalization
+\item Enhancement (gamma/contrast/bias)
+\item Color/gray region separation
+\item Final image assembly
+\end{enumerate}
+
+\section{Acknowledgments and References}
+
+\subsection{Acknowledgments}
+
+ColorFaintGray GUI development is built upon the excellent work of:
+
+\begin{itemize}[leftmargin=*]
+\item GNU Astronomy Utilities development team
+\item The astscript-color-faint-gray algorithm by Raúl Infante-Sainz and
+Mohammad Akhlaghi
+\item PyQt6 and the Qt framework for the graphical interface
+\item The Python scientific computing ecosystem
+\end{itemize}
+
+\subsection{Key References}
+
+\begin{enumerate}
+\item Lupton, R., Blanton, M. R., Fekete, G., et al. 2004, ``Preparing Red-
+Green-Blue Images from CCD Data,'' PASP, 116, 133
+\item Infante-Sainz, R. \& Akhlaghi, M. 2024, ``Gnuastro: Visualizing the
+Full Dynamic Range in Color Images,'' Research Notes of the AAS, 8, 10
+\item Akhlaghi, M. \& Ichikawa, T. 2015, ``Noise-based Detection and
+Segmentation of Nebulous Objects,'' ApJS, 220, 1
+\end{enumerate}
+
+\subsection{Software Citation}
+
+When using ColorFaintGray GUI in research, please cite:
+
+\begin{quote}
+This work made use of ColorFaintGray GUI v1.0, a Python/PyQt6-based
+interface for GNU Astronomy Utilities' astscript-color-faint-gray (Infante-
+Sainz \& Akhlaghi 2024). The underlying color image algorithm implements the
+asinh transformation technique described by Lupton et al. (2004).
+\end{quote}
+
+\section{Appendix}
+
+\subsection{Example Parameter Sets}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Object Type & qbright & stretch & gamma & Notes \\
+\midrule
+Elliptical Galaxies & 1.0 & 2.0 & 0.8 & Emphasize outer structure \\
+Spiral Galaxies & 1.2 & 1.8 & 0.9 & Balance arms and nucleus \\
+Star Forming Regions & 0.8 & 2.5 & 0.7 & Reveal emission structure \\
+Globular Clusters & 0.6 & 1.2 & 0.9 & Preserve stellar colors \\
+Deep Fields & 1.5 & 3.0 & 0.7 & Maximum faint enhancement \\
+Planetary Nebulae & 1.0 & 2.0 & 0.8 & Balance central star \\
+\bottomrule
+\end{tabular}
+\caption{Recommended parameter starting points for different astronomical
+objects.}
+\label{tab:object-params}
+\end{table}
+
+\subsection{Troubleshooting Checklist}
+
+\subsubsection{Before Seeking Help}
+
+\begin{enumerate}
+\item Verify all input files are valid FITS format
+\item Check that astscript-color-faint-gray executes independently
+\item Try with default parameters first
+\item Review error messages in dialogs and console output
+\item Check available system memory and disk space
+\item Ensure Python and PyQt6 versions meet requirements
+\end{enumerate}
+
+\subsubsection{Information to Include When Reporting Issues}
+
+\begin{itemize}[leftmargin=*]
+\item Operating system and version
+\item Python version (\texttt{python --version})
+\item PyQt6 version (\texttt{pip show PyQt6})
+\item GNU Astronomy Utilities version (\texttt{astscript-color-faint-gray
+--version})
+\item Input file characteristics (dimensions, format, size)
+\item Complete error messages
+\item Steps to reproduce the problem
+\end{itemize}
+
+\subsection{Configuration File Reference}
+
+The main configuration file (\texttt{config.json}) contains:
+
+\begin{lstlisting}
+{
+  "app": {
+    "last_input_dir": "/path/to/input/directory",
+    "last_output_dir": "/path/to/output/directory", 
+    "default_output_format": "PDF",
+    "cache_size": 25,
+    "cache_dir": "cache/",
+    "astscript_path": "astscript-color-faint-gray"
+  },
+  "ui": {
+    "parameter_panel_width": 300,
+    "grid_thumbnail_size": 150,
+    "window_geometry": "saved window position"
+  },
+  "parameters": {
+    "qbright": 1.0,
+    "stretch": 1.0,
+    "contrast": 3.0,
+    "gamma": 0.8
+  }
+}
+\end{lstlisting}
+
+---
+
+\textit{For the most current information and updates, please visit the
+project repository and consult the GNU Astronomy Utilities documentation at
+\url{https://www.gnu.org/software/gnuastro/}.}
+
+\end{document}
