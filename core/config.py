@@ -49,19 +49,34 @@ class Config:
             # These are the default parameters for astscript-color-faint-gray
             # but they are NOT persisted in config file unless explicitly saved as presets
             "parameters": {
+                # Input parameters
+                "hdu": None,
+                "rhdu": None,
+                "globalhdu": None,
+                "weight": None,
+                "minimum": None,
+                "zeropoint": None,
+                
+                # Asinh scaling parameters (our defaults differ from astscript)
                 "qbright": 50.0,
                 "stretch": 0.1,
+                
+                # Contrast, bias, and marks
+                "bias": 0.0,
                 "contrast": 4.0,
                 "gamma": 0.5,
-                "minimum": None,
-                "maximum": None,
-                "zeropoint": None,
-                "colorval": 15.0,  # Color threshold
-                "grayval": 14.0,   # Gray threshold
+                "markoptions": None,
+                
+                # Color and gray parameters (our defaults differ from astscript)
                 "coloronly": False,
+                "regions": None,
+                "grayval": 14.0,
+                "colorval": 15.0,
+                "graykernelfwhm": 1.0,
+                "colorkernelfwhm": 1.0,
+                
+                # Output
                 "quality": 95,
-                "hdu": None,
-                "tmpdir": None,
                 "keeptmp": False,
                 "checkparams": False
             }

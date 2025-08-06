@@ -57,8 +57,21 @@ class CommandBuilder:
         # Start with base command
         cmd = [self.astscript_path]
         
-        # Add the required -g 0 flag for proper operation
-        cmd.extend(['-g', '0'])
+        # Add HDU/extension parameters
+        if params.get('hdu') and params['hdu'].strip():
+            # Handle multiple HDUs separated by commas
+            hdus = [h.strip() for h in params['hdu'].split(',') if h.strip()]
+            for hdu in hdus:
+                cmd.extend(['--hdu', hdu])
+        
+        if params.get('rhdu') and params['rhdu'].strip():
+            cmd.extend(['--rhdu', params['rhdu']])
+        
+        if params.get('globalhdu') and params['globalhdu'].strip():
+            cmd.extend(['--globalhdu', params['globalhdu']])
+        else:
+            # Add the required -g 0 flag for proper operation when no global HDU specified
+            cmd.extend(['-g', '0'])
         
         # Add input files (Red, Green, Blue channels)
         cmd.extend([
@@ -67,78 +80,64 @@ class CommandBuilder:
             params['blue_path']
         ])
         
+        # Add weight parameters
+        if params.get('weight') and params['weight'].strip():
+            weights = [w.strip() for w in params['weight'].split(',') if w.strip()]
+            for weight in weights:
+                cmd.extend(['--weight', weight])
+        
+        # Add minimum value parameters
+        if params.get('minimum') and params['minimum'].strip():
+            minimums = [m.strip() for m in params['minimum'].split(',') if m.strip()]
+            for minimum in minimums:
+                cmd.extend(['--minimum', minimum])
+        
+        # Add zero point calibration
+        if params.get('zeropoint') and params['zeropoint'].strip():
+            zeropoints = [z.strip() for z in params['zeropoint'].split(',') if z.strip()]
+            for zp in zeropoints:
+                cmd.extend(['--zeropoint', zp])
+        
+        # Add core transformation parameters (always include as our defaults differ)
+        cmd.extend(['--qbright', str(params.get('qbright', 50.0))])
+        cmd.extend(['--stretch', str(params.get('stretch', 0.1))])
+        
+        # Add contrast, bias, and gamma parameters
+        if params.get('bias') is not None and params['bias'] != 0.0:
+            cmd.extend(['--bias', str(params['bias'])])
+        
+        cmd.extend(['--contrast', str(params.get('contrast', 4.0))])
+        cmd.extend(['--gamma', str(params.get('gamma', 0.5))])
+        
+        # Add mark options
+        if params.get('markoptions') and params['markoptions'].strip():
+            cmd.extend(['--markoptions', params['markoptions']])
+        
+        # Add color/grayscale parameters (always include as our defaults differ)
+        if params.get('coloronly', False):
+            cmd.append('--coloronly')
+        
+        if params.get('regions') and params['regions'].strip():
+            cmd.extend(['--regions', params['regions']])
+        
+        cmd.extend(['--grayval', str(params.get('grayval', 14.0))])
+        cmd.extend(['--colorval', str(params.get('colorval', 15.0))])
+        
+        # Add kernel FWHM parameters
+        if params.get('graykernelfwhm') is not None and params['graykernelfwhm'] != 1.0:
+            cmd.extend(['--graykernelfwhm', str(params['graykernelfwhm'])])
+        
+        if params.get('colorkernelfwhm') is not None and params['colorkernelfwhm'] != 1.0:
+            cmd.extend(['--colorkernelfwhm', str(params['colorkernelfwhm'])])
+        
         # Add output specification
         if 'output_path' in params:
             cmd.extend(['--output', params['output_path']])
         
-        # Add core transformation parameters
-        if params.get('qbright') is not None and params['qbright'] != 50.0:
-            cmd.extend(['--qbright', str(params['qbright'])])
-        
-        if params.get('stretch') is not None and params['stretch'] != 0.1:
-            cmd.extend(['--stretch', str(params['stretch'])])
-        
-        if params.get('contrast') is not None and params['contrast'] != 4.0:
-            cmd.extend(['--contrast', str(params['contrast'])])
-        
-        if params.get('gamma') is not None and params['gamma'] != 0.5:
-            cmd.extend(['--gamma', str(params['gamma'])])
-        
-        # Add brightness limit parameters
-        if params.get('minimum') is not None:
-            if isinstance(params['minimum'], list):
-                for min_val in params['minimum']:
-                    cmd.extend(['--minimum', str(min_val)])
-            else:
-                cmd.extend(['--minimum', str(params['minimum'])])
-        
-        if params.get('maximum') is not None:
-            if isinstance(params['maximum'], list):
-                for max_val in params['maximum']:
-                    cmd.extend(['--maximum', str(max_val)])
-            else:
-                cmd.extend(['--maximum', str(params['maximum'])])
-        
-        # Add zero point calibration
-        if params.get('zeropoint') is not None:
-            if isinstance(params['zeropoint'], list):
-                for zp in params['zeropoint']:
-                    cmd.extend(['--zeropoint', str(zp)])
-            else:
-                cmd.extend(['--zeropoint', str(params['zeropoint'])])
-        
-        # Add region control parameters
-        if params.get('colorval') is not None:
-            cmd.extend(['--colorval', str(params['colorval'])])
-        
-        if params.get('grayval') is not None:
-            cmd.extend(['--grayval', str(params['grayval'])])
-        
-        # Add boolean flags
-        if params.get('coloronly', False):
-            cmd.append('--coloronly')
-        
-        # Add quality parameter for output
-        if params.get('quality') is not None and params['quality'] != 95:
-            cmd.extend(['--quality', str(params['quality'])])
-        
-        # Add HDU specifications if provided
-        if params.get('hdu'):
-            if isinstance(params['hdu'], list):
-                for hdu in params['hdu']:
-                    cmd.extend(['--hdu', str(hdu)])
-            else:
-                cmd.extend(['--hdu', str(params['hdu'])])
-        
-        # Add temporary directory option
-        if params.get('tmpdir'):
-            cmd.extend(['--tmpdir', params['tmpdir']])
-        
-        # Add keep temporary files option
+        # Add debug/output options
         if params.get('keeptmp', False):
             cmd.append('--keeptmp')
         
-        # Add check parameters option
         if params.get('checkparams', False):
             cmd.append('--checkparams')
         
@@ -213,19 +212,33 @@ class CommandBuilder:
             Dictionary with default parameter values
         """
         return {
+            # Input parameters
+            'hdu': None,
+            'rhdu': None,
+            'globalhdu': None,
+            'weight': None,
+            'minimum': None,
+            'zeropoint': None,
+            
+            # Asinh scaling parameters (our defaults differ from astscript)
             'qbright': 50.0,
             'stretch': 0.1,
+            
+            # Contrast, bias, and marks
+            'bias': 0.0,
             'contrast': 4.0,
             'gamma': 0.5,
-            'minimum': None,
-            'maximum': None,
-            'zeropoint': None,
-            'colorval': 15.0,  # Color threshold
-            'grayval': 14.0,   # Gray threshold
+            'markoptions': None,
+            
+            # Color and gray parameters (our defaults differ from astscript)
             'coloronly': False,
-            'quality': 95,
-            'hdu': None,
-            'tmpdir': None,
+            'regions': None,
+            'grayval': 14.0,
+            'colorval': 15.0,
+            'graykernelfwhm': 1.0,
+            'colorkernelfwhm': 1.0,
+            
+            # Output
             'keeptmp': False,
             'checkparams': False
         }

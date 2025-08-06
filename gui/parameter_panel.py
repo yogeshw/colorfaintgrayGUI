@@ -26,7 +26,7 @@ from typing import Dict, Any
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QLabel,
     QSlider, QDoubleSpinBox, QSpinBox, QCheckBox, QPushButton, QComboBox,
-    QScrollArea, QFrame, QSizePolicy, QTextEdit
+    QScrollArea, QFrame, QSizePolicy, QTextEdit, QLineEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont
@@ -309,6 +309,59 @@ class SpinBoxControl(ParameterControl):
         self.spinbox.blockSignals(False)
 
 
+class LineEditControl(ParameterControl):
+    """Line edit control for string parameters."""
+    
+    def __init__(self, param_name: str, label: str, default: str = "", placeholder: str = "", parent=None):
+        """Initialize line edit control.
+        
+        Args:
+            param_name: Parameter name
+            label: Display label
+            default: Default value
+            placeholder: Placeholder text
+            parent: Parent widget
+        """
+        super().__init__(param_name, label, parent)
+        self.default = default
+        self.placeholder = placeholder
+        
+        self.setup_ui()
+        self.set_value(default)
+    
+    def setup_ui(self):
+        """Setup control UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Label
+        self.label = QLabel(self.label_text)
+        self.label.setFont(QFont("", 9))
+        layout.addWidget(self.label)
+        
+        # Line edit
+        self.line_edit = QLineEdit()
+        if self.placeholder:
+            self.line_edit.setPlaceholderText(self.placeholder)
+        self.line_edit.textChanged.connect(self.on_changed)
+        layout.addWidget(self.line_edit)
+    
+    def on_changed(self, text):
+        """Handle text change."""
+        self.value_changed.emit(self.param_name, text if text else None)
+    
+    def get_value(self):
+        """Get current value."""
+        text = self.line_edit.text().strip()
+        return text if text else None
+    
+    def set_value(self, value):
+        """Set value."""
+        self.line_edit.blockSignals(True)
+        self.line_edit.setText(str(value) if value is not None else "")
+        self.line_edit.blockSignals(False)
+
+
 class CollapsibleGroupBox(QGroupBox):
     """Collapsible group box for organizing parameters."""
     
@@ -343,6 +396,7 @@ class CollapsibleGroupBox(QGroupBox):
         if not self.content_widget.layout():
             layout = QVBoxLayout(self.content_widget)
             layout.setContentsMargins(5, 3, 5, 3)
+            return layout
         return self.content_widget.layout()
 
 
@@ -390,10 +444,13 @@ class ParameterPanel(QWidget):
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         
+        # Input parameters group
+        self.setup_input_parameters(scroll_layout)
+        
         # Basic parameters group
         self.setup_basic_parameters(scroll_layout)
         
-        # Advanced parameters group
+        # Advanced parameters group  
         self.setup_advanced_parameters(scroll_layout)
         
         # Output settings group
@@ -408,6 +465,55 @@ class ParameterPanel(QWidget):
         
         # Action buttons
         self.setup_action_buttons(layout)
+    
+    def setup_input_parameters(self, parent_layout):
+        """Setup input parameter controls."""
+        group = CollapsibleGroupBox("Input Settings", collapsed=True)
+        layout = group.get_content_layout()
+        
+        # HDU/extension for input channels
+        hdu_control = LineEditControl(
+            "hdu", "HDU/Extension:", "", "e.g., 0, SCI, or HDU0,HDU1,HDU2"
+        )
+        self.controls["hdu"] = hdu_control
+        layout.addWidget(hdu_control)
+        
+        # HDU for regions image
+        rhdu_control = LineEditControl(
+            "rhdu", "Regions HDU:", "", "HDU for regions image"
+        )
+        self.controls["rhdu"] = rhdu_control
+        layout.addWidget(rhdu_control)
+        
+        # Global HDU for all inputs
+        globalhdu_control = LineEditControl(
+            "globalhdu", "Global HDU:", "", "Use this HDU for all inputs"
+        )
+        self.controls["globalhdu"] = globalhdu_control
+        layout.addWidget(globalhdu_control)
+        
+        # Weight for each channel
+        weight_control = LineEditControl(
+            "weight", "Channel Weights:", "", "e.g., 1.0,1.0,1.0 or single value"
+        )
+        self.controls["weight"] = weight_control
+        layout.addWidget(weight_control)
+        
+        # Minimum value for each channel
+        minimum_control = LineEditControl(
+            "minimum", "Minimum Values:", "", "e.g., 0.0,0.0,0.0 or single value"
+        )
+        self.controls["minimum"] = minimum_control
+        layout.addWidget(minimum_control)
+        
+        # Zero point magnitude
+        zeropoint_control = LineEditControl(
+            "zeropoint", "Zero Points:", "", "e.g., 25.0,25.0,25.0 or single value"
+        )
+        self.controls["zeropoint"] = zeropoint_control
+        layout.addWidget(zeropoint_control)
+        
+        parent_layout.addWidget(group)
     
     def setup_basic_parameters(self, parent_layout):
         """Setup basic parameter controls."""
@@ -449,6 +555,20 @@ class ParameterPanel(QWidget):
         group = CollapsibleGroupBox("Advanced Settings", collapsed=True)
         layout = group.get_content_layout()
         
+        # Bias parameter
+        bias_control = SpinBoxOnlyControl(
+            "bias", "Bias (Constant Addition):", -100.0, 100.0, 0.1, 2, 0.0
+        )
+        self.controls["bias"] = bias_control
+        layout.addWidget(bias_control)
+        
+        # Mark options
+        markoptions_control = LineEditControl(
+            "markoptions", "Mark Options:", "", "Options for adding marks"
+        )
+        self.controls["markoptions"] = markoptions_control
+        layout.addWidget(markoptions_control)
+        
         # Color/gray thresholds - color threshold 15.0, grey threshold 14.0
         colorval_control = SpinBoxOnlyControl(
             "colorval", "Color Threshold:", 0.0, 100.0, 0.1, 1, 15.0
@@ -466,6 +586,26 @@ class ParameterPanel(QWidget):
         coloronly_control = CheckBoxControl("coloronly", "Color Only (No Gray)", False)
         self.controls["coloronly"] = coloronly_control
         layout.addWidget(coloronly_control)
+        
+        # Regions image
+        regions_control = LineEditControl(
+            "regions", "Regions Image:", "", "Path to regions labeled image"
+        )
+        self.controls["regions"] = regions_control
+        layout.addWidget(regions_control)
+        
+        # Kernel FWHM parameters
+        graykernelfwhm_control = SpinBoxOnlyControl(
+            "graykernelfwhm", "Gray Kernel FWHM:", 0.1, 20.0, 0.1, 2, 1.0
+        )
+        self.controls["graykernelfwhm"] = graykernelfwhm_control
+        layout.addWidget(graykernelfwhm_control)
+        
+        colorkernelfwhm_control = SpinBoxOnlyControl(
+            "colorkernelfwhm", "Color Kernel FWHM:", 0.1, 20.0, 0.1, 2, 1.0
+        )
+        self.controls["colorkernelfwhm"] = colorkernelfwhm_control
+        layout.addWidget(colorkernelfwhm_control)
         
         parent_layout.addWidget(group)
     
@@ -599,24 +739,8 @@ class ParameterPanel(QWidget):
         parameters = {}
         for name, control in self.controls.items():
             value = control.get_value()
-            # Always include boolean parameters with their actual values
-            if name in ["coloronly", "keeptmp", "checkparams"]:
-                parameters[name] = value
-            # Only include non-default values for numeric parameters to keep command clean
-            elif name == "qbright" and value != 50.0:
-                parameters[name] = value
-            elif name == "stretch" and value != 0.1:
-                parameters[name] = value
-            elif name == "contrast" and value != 4.0:
-                parameters[name] = value
-            elif name == "gamma" and value != 0.5:
-                parameters[name] = value
-            elif name == "quality" and value != 95:
-                parameters[name] = value
-            elif name == "colorval" and value != 15.0:
-                parameters[name] = value
-            elif name == "grayval" and value != 14.0:
-                parameters[name] = value
+            # Always include all parameters to ensure complete command generation
+            parameters[name] = value
         
         return parameters
     
@@ -630,29 +754,20 @@ class ParameterPanel(QWidget):
         for control in self.controls.values():
             control.blockSignals(True)
         
+        # Get defaults from command builder
+        from core.command_builder import CommandBuilder
+        command_builder = CommandBuilder()
+        defaults = command_builder.get_default_params()
+        
         # Set values
-        defaults = self.config.defaults["parameters"]
         for name, control in self.controls.items():
-            if name in parameters:
+            if name in parameters and parameters[name] is not None:
                 value = parameters[name]
-                # Skip None values that controls can't handle
-                if value is not None:
-                    control.set_value(value)
-                elif name == "colorval":
-                    control.set_value(15.0)  # Use new default for color threshold
-                elif name == "grayval":
-                    control.set_value(14.0)  # Use new default for gray threshold
-            elif name in defaults:
+                control.set_value(value)
+            elif name in defaults and defaults[name] is not None:
                 default_value = defaults[name]
-                # Handle None values by using control's default
-                if default_value is None:
-                    if name == "colorval":
-                        control.set_value(15.0)  # Use new default for color threshold
-                    elif name == "grayval":
-                        control.set_value(14.0)  # Use new default for gray threshold
-                    # Skip other None values - controls keep their initialization values
-                else:
-                    control.set_value(default_value)
+                control.set_value(default_value)
+            # For controls not in defaults, keep their initialization values
         
         # Restore signals
         for control in self.controls.values():
@@ -663,26 +778,13 @@ class ParameterPanel(QWidget):
         # Get defaults from command builder to ensure completeness
         from core.command_builder import CommandBuilder
         command_builder = CommandBuilder()
-        builder_defaults = command_builder.get_default_params()
-        
-        # Create a safe defaults dict that handles None values
-        safe_defaults = {}
-        for name, value in builder_defaults.items():
-            if value is None:
-                # Use safe defaults for controls that can't handle None
-                if name == "colorval":
-                    safe_defaults[name] = 15.0
-                elif name == "grayval":
-                    safe_defaults[name] = 14.0
-                # Skip other None values - controls will keep their current values
-            else:
-                safe_defaults[name] = value
+        defaults = command_builder.get_default_params()
         
         # Update config with the complete defaults
         self.config.reset_parameters()
         
-        # Load the safe defaults into controls
-        self.load_parameters(safe_defaults)
+        # Load the defaults into controls
+        self.load_parameters(defaults)
         self.emit_parameters_changed()
     
     def update_command_display(self, command_list=None):
