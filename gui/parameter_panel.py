@@ -822,10 +822,30 @@ class ParameterPanel(QWidget):
     
     def load_preset(self):
         """Load parameter preset from file."""
-        # TODO: Implement preset loading
-        pass
+        from gui.preset_manager import PresetManager, PresetDialog
+        
+        preset_manager = PresetManager(self.config.get_config_dir())
+        current_params = self.get_current_parameters()
+        
+        dialog = PresetDialog(preset_manager, current_params, self)
+        dialog.preset_selected.connect(self.apply_preset)
+        dialog.exec()
     
     def save_preset(self):
         """Save current parameters as preset."""
-        # TODO: Implement preset saving
-        pass
+        from gui.preset_manager import PresetManager, PresetDialog
+        
+        preset_manager = PresetManager(self.config.get_config_dir())
+        current_params = self.get_current_parameters()
+        
+        dialog = PresetDialog(preset_manager, current_params, self)
+        dialog.exec()
+        
+    def apply_preset(self, parameters):
+        """Apply loaded preset parameters.
+        
+        Args:
+            parameters: Dictionary of parameter values to apply
+        """
+        self.load_parameters(parameters)
+        self.emit_parameters_changed()

@@ -101,18 +101,25 @@ left and tabbed workspace on the right.}
 \subsection{Key Features}
 
 \begin{itemize}[leftmargin=*]
+\item \textbf{Complete Parameter Coverage}: Access to all
+astscript-color-faint-gray parameters including input HDUs, weight factors,
+minimum values, and zeropoint adjustments
 \item \textbf{Intuitive Parameter Control}: Real-time adjustment of asinh
 transformation parameters with immediate visual feedback
-\item \textbf{Automatic Image Caching}: All generated images are cached
-with metadata for easy comparison and workflow management
+\item \textbf{Advanced Input Control}: Individual HDU specification, 
+weight scaling, minimum clipping, and zeropoint calibration for each channel
+\item \textbf{Robust Preset System}: Save, load, and manage parameter
+combinations with complete metadata and automatic validation
+\item \textbf{Automatic Image Caching}: All generated images cached with
+metadata for easy comparison and workflow management
 \item \textbf{Multi-Image Comparison}: Side-by-side comparison of up to 6
 different parameter combinations
-\item \textbf{Preset Management}: Save and load parameter combinations for
-different object types
 \item \textbf{Command Integration}: View and copy exact command-line
-equivalents for reproducible workflows
+equivalents for reproducible workflows with full parameter sets
 \item \textbf{Advanced Visualization}: Support for both traditional color
 and innovative grayscale background modes
+\item \textbf{Error Handling}: Comprehensive validation and user-friendly
+error reporting for all operations
 \end{itemize}
 
 \section{Installation and Setup}
@@ -171,13 +178,18 @@ The parameter panel contains all image processing controls organized into
 collapsible sections:
 
 \begin{itemize}[leftmargin=*]
+\item \textbf{Input Settings}: File selection, HDU specification, weight 
+factors, minimum values, and zeropoint adjustments
 \item \textbf{Basic Parameters}: Core transformation controls (qbright,
 stretch, contrast, gamma)
-\item \textbf{Advanced Parameters}: Color/grayscale thresholds and quality
-settings
-\item \textbf{Output Settings}: File format and destination options
-\item \textbf{Command Display}: Real-time command preview
-\item \textbf{Action Buttons}: Generate, Reset, Preset management
+\item \textbf{Advanced Parameters}: Color/grayscale thresholds, quality
+settings, and transformation options
+\item \textbf{Output Settings}: File format, destination options, and
+quality control
+\item \textbf{Command Display}: Real-time command preview with all
+parameters
+\item \textbf{Action Buttons}: Generate, Reset, comprehensive Preset
+management
 \end{itemize}
 
 \begin{figure}[H]
@@ -284,7 +296,51 @@ results
 
 \subsection{Parameter Adjustment}
 
-The asinh transformation is controlled by four primary parameters:
+The ColorFaintGray GUI provides comprehensive control over all
+astscript-color-faint-gray parameters, organized into logical sections for
+efficient workflow management.
+
+\subsubsection{Input Settings}
+
+\paragraph{Input Files and HDUs}
+Each channel (R, G, B) can specify individual HDU numbers for multi-
+extension FITS files:
+\begin{itemize}[leftmargin=*]
+\item \textbf{HDU Specification}: Individual HDU number for each channel
+(default: 0)
+\item \textbf{Multi-Extension Support}: Access any image extension within
+FITS files
+\item \textbf{Flexible Input}: Mix different HDUs from the same or
+different files
+\end{itemize}
+
+\paragraph{Weight Factors (0.001--1000, default: 1.0)}
+Channel-specific scaling factors applied before processing:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Photometric Calibration}: Compensate for different filter
+sensitivities
+\item \textbf{Color Balance}: Adjust relative channel contributions
+\item \textbf{Exposure Scaling}: Account for different exposure times
+\end{itemize}
+
+\paragraph{Minimum Values (auto or manual)}
+Pixel value thresholds applied to each channel:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Noise Clipping}: Remove negative noise artifacts
+\item \textbf{Background Subtraction}: Set appropriate zero levels
+\item \textbf{Dynamic Range Control}: Optimize for specific brightness
+ranges
+\end{itemize}
+
+\paragraph{Zeropoint Adjustments (default: 0.0)}
+Magnitude zeropoint corrections for photometric accuracy:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Photometric Calibration}: Apply instrumental magnitude
+corrections
+\item \textbf{Filter Response}: Compensate for effective wavelength
+differences
+\item \textbf{Atmospheric Extinction}: Include extinction corrections
+\end{itemize}
 
 \subsubsection{Basic Parameters}
 
@@ -318,6 +374,14 @@ appear in inverse grayscale.
 When enabled, eliminates grayscale regions entirely. Background appears
 either in color or pure black.
 
+\paragraph{forcecolor (checkbox, default: false)}
+Forces color mode for all pixels above minimum thresholds, useful for
+ensuring consistent color representation across the image.
+
+\paragraph{quality (1--100, default: 95)}
+Output image quality setting affecting compression and file size for
+formats that support quality adjustment.
+
 \begin{figure}[H]
 \centering
 % Placeholder for parameter effects illustration
@@ -336,11 +400,25 @@ stretch, and gamma values.}
 
 \begin{enumerate}
 \item Ensure all three channel files are loaded and validated
-\item Adjust parameters as desired using the Parameter Panel
+\item Configure input settings if using non-default HDUs, weights, 
+minimums, or zeropoints
+\item Adjust basic parameters (qbright, stretch, contrast, gamma) as 
+desired using the Parameter Panel
+\item Set advanced parameters (colorval, grayval, coloronly, etc.) if 
+specific output characteristics are required
+\item Specify output path and format in the output settings
 \item Click the large green \textbf{Generate Image} button
-\item Monitor progress in the progress dialog
+\item Monitor progress in the progress dialog with real-time status updates
 \item Review results in the automatically opened Preview tab
 \end{enumerate}
+
+\textbf{Important Notes}:
+\begin{itemize}[leftmargin=*]
+\item Output path specification is now mandatory and automatically validated
+\item All parameters are preserved for reproducibility and preset creation
+\item Command generation includes complete parameter set for external use
+\item Error handling provides detailed feedback for any processing issues
+\end{itemize}
 
 Alternative generation methods:
 \begin{itemize}[leftmargin=*]
@@ -462,32 +540,72 @@ analysis.}
 
 \subsection{Preset Management}
 
-Presets enable efficient reuse of successful parameter combinations:
+The ColorFaintGray GUI includes a comprehensive preset management system
+that enables efficient reuse of successful parameter combinations with
+complete validation and metadata tracking.
 
 \subsubsection{Creating Presets}
 
 \begin{enumerate}
-\item Adjust parameters to desired values in Parameter Panel
-\item Access: Presets $\rightarrow$ Save Current as Preset (Ctrl+Shift+S)
-\item Enter descriptive name and optional description
-\item Preset saved as JSON file in configuration directory
+\item Configure all desired parameters in the Parameter Panel (including
+input settings, basic parameters, advanced parameters, and output options)
+\item Click \textbf{Save Preset} button or use Presets $\rightarrow$ Save
+Current as Preset (Ctrl+Shift+S)
+\item Enter descriptive name and optional description in the save dialog
+\item Preset automatically saved as JSON file with complete parameter set
+and metadata
+\item Validation ensures all required parameters are captured
 \end{enumerate}
 
-\subsubsection{Using Presets}
+\subsubsection{Loading and Managing Presets}
 
 \begin{itemize}[leftmargin=*]
-\item \textbf{Quick Load}: Preset dropdown in Parameter Panel
-\item \textbf{Management}: Presets $\rightarrow$ Manage Presets (Ctrl+P)
-\item \textbf{Import/Export}: Share presets between users
+\item \textbf{Quick Load}: Use preset dropdown menu in Parameter Panel for
+immediate access
+\item \textbf{Load Preset Button}: Browse and load preset files with
+automatic validation
+\item \textbf{Management Interface}: Access comprehensive preset manager
+via Presets $\rightarrow$ Manage Presets (Ctrl+P)
+\item \textbf{Automatic Validation}: All loaded presets validated for
+parameter completeness and compatibility
+\item \textbf{Error Recovery}: Robust handling of corrupted or incomplete
+preset files
+\end{itemize}
+
+\subsubsection{Preset Features}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Complete Parameter Coverage}: All parameters saved including
+input settings, HDU specifications, weights, and advanced options
+\item \textbf{Metadata Preservation}: Creation date, description, and
+parameter summaries automatically stored
+\item \textbf{Cross-Platform Compatibility}: JSON format ensures presets
+work across different systems
+\item \textbf{Import/Export}: Share preset collections between users and
+installations
+\item \textbf{Backup and Recovery}: Automatic backup of preset directory
+during operations
 \end{itemize}
 
 \subsubsection{Recommended Preset Categories}
 
 \begin{itemize}[leftmargin=*]
-\item \textbf{Galaxies}: Enhanced faint structure visibility
-\item \textbf{Star Fields}: Optimized stellar color representation
-\item \textbf{Nebulae}: Balanced emission and reflection regions
-\item \textbf{Deep Field}: Maximum faint feature enhancement
+\item \textbf{Galaxies - Elliptical}: Optimized for smooth elliptical
+galaxy structure with emphasis on outer isophotes
+\item \textbf{Galaxies - Spiral}: Balanced parameters for spiral arm
+structure and nuclear regions
+\item \textbf{Star Fields}: Stellar color preservation with minimal
+artifacts in dense fields
+\item \textbf{Nebulae - Emission}: Enhanced contrast for H$\alpha$ and
+other emission line regions
+\item \textbf{Nebulae - Reflection}: Optimized for blue reflection nebulae
+and dust lanes
+\item \textbf{Deep Field - Survey}: Maximum faint feature enhancement for
+survey-depth observations
+\item \textbf{Deep Field - Ultra-deep}: Specialized parameters for
+ultra-deep field observations
+\item \textbf{Custom - High Resolution}: Optimized for high spatial
+resolution observations (HST, JWST)
 \end{itemize}
 
 \section{Parameter Reference}
@@ -525,12 +643,18 @@ qbright & 0.001--100 & 1.0 & Bright feature enhancement \\
 stretch & 0.001--100 & 1.0 & Faint feature visibility \\
 contrast & 0.1--10 & 3.0 & Linear contrast scaling \\
 gamma & 0.1--10 & 0.8 & Nonlinear brightness curve \\
-colorval & auto & computed & Color/black threshold \\
-grayval & auto & computed & Black/gray threshold \\
+R/G/B HDU & 0--999 & 0 & FITS extension selection \\
+R/G/B Weight & 0.001--1000 & 1.0 & Channel scaling factor \\
+R/G/B Minimum & auto/manual & auto & Noise clipping threshold \\
+R/G/B Zeropoint & $\pm$50 & 0.0 & Magnitude calibration \\
+colorval & auto/manual & auto & Color/black threshold \\
+grayval & auto/manual & auto & Black/gray threshold \\
+coloronly & boolean & false & Disable grayscale regions \\
+forcecolor & boolean & false & Force color mode \\
 quality & 1--100 & 95 & Output image quality \\
 \bottomrule
 \end{tabular}
-\caption{Parameter ranges and effects summary.}
+\caption{Complete parameter reference with ranges and effects.}
 \label{tab:parameters}
 \end{table}
 
@@ -571,17 +695,36 @@ Balances emission lines with continuum features:
 
 \section{Command-Line Integration}
 
-\subsection{Command Display and History}
+\subsection{Enhanced Command Display and History}
 
 The Parameter Panel continuously displays the equivalent command-line
-invocation:
+invocation with complete parameter coverage:
 
 \begin{lstlisting}[language=bash]
 astscript-color-faint-gray -g 0 \
+  --rhdu 0 --ghdu 0 --bhdu 0 \
+  --rweight 1.0 --gweight 1.0 --bweight 1.0 \
+  --rmin auto --gmin auto --bmin auto \
+  --rzero 0.0 --gzero 0.0 --bzero 0.0 \
   input_r.fits input_g.fits input_b.fits \
   --qbright 1.5 --stretch 2.0 --contrast 3.0 \
-  --gamma 0.8 --output color_image.pdf
+  --gamma 0.8 --quality 95 \
+  --output color_image.pdf
 \end{lstlisting}
+
+\subsubsection{Command Features}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Complete Parameter Set}: All GUI parameters reflected in
+command line
+\item \textbf{Automatic Output Path}: Mandatory output specification
+prevents execution errors  
+\item \textbf{Real-time Updates}: Command updates immediately as parameters
+change
+\item \textbf{Copy Functionality}: One-click copying for external use
+\item \textbf{Validation}: Commands guaranteed to be syntactically correct
+and complete
+\end{itemize}
 
 \subsubsection{Command History Access}
 
@@ -590,24 +733,59 @@ astscript-color-faint-gray -g 0 \
 \item \textbf{Copy Current}: Tools $\rightarrow$ Copy Current Command
 (Ctrl+Shift+C)
 \item \textbf{Export History}: Save complete command log for documentation
+\item \textbf{Parameter Reconstruction}: Load previous commands to restore
+exact parameter states
 \end{itemize}
 
 \subsection{Batch Processing Integration}
 
-Commands copied from the GUI can be used for automated processing:
+Commands copied from the GUI can be used for automated processing with
+complete parameter specifications:
 
 \begin{lstlisting}[language=bash]
 #!/bin/bash
 # Batch process multiple image sets using GUI-optimized parameters
 
-# Parameters optimized in GUI for galaxy fields
-GALAXY_PARAMS="--qbright 1.5 --stretch 2.2 --gamma 0.8"
+# Parameters optimized in GUI for galaxy fields  
+BASIC_PARAMS="--qbright 1.5 --stretch 2.2 --gamma 0.8 --contrast 3.0"
+INPUT_PARAMS="--rhdu 0 --ghdu 0 --bhdu 0 --rweight 1.0 --gweight 1.0 --bweight 1.0"
+ADVANCED_PARAMS="--quality 95"
 
-# Process multiple fields
+# Process multiple fields with consistent parameters
 for field in field1 field2 field3; do
+    echo "Processing ${field}..."
     astscript-color-faint-gray -g 0 \
+        $INPUT_PARAMS \
         ${field}_r.fits ${field}_g.fits ${field}_b.fits \
-        $GALAXY_PARAMS --output ${field}_color.pdf
+        $BASIC_PARAMS $ADVANCED_PARAMS \
+        --output ${field}_color.pdf
+done
+\end{lstlisting}
+
+\subsubsection{Advanced Batch Processing}
+
+For complex workflows with varying parameters:
+
+\begin{lstlisting}[language=bash]
+#!/bin/bash
+# Process with different parameters for different object types
+
+# Define parameter sets exported from GUI presets
+declare -A PRESETS
+PRESETS[galaxy]="--qbright 1.5 --stretch 2.2 --gamma 0.8"
+PRESETS[starfield]="--qbright 0.8 --stretch 1.0 --gamma 0.9" 
+PRESETS[nebula]="--qbright 1.2 --stretch 2.8 --gamma 0.7"
+
+# Apply appropriate preset based on object type
+for object_type in galaxy starfield nebula; do
+    for target in ${object_type}_*; do
+        [[ -f ${target}_r.fits ]] || continue
+        astscript-color-faint-gray -g 0 \
+            --rhdu 0 --ghdu 0 --bhdu 0 \
+            ${target}_r.fits ${target}_g.fits ${target}_b.fits \
+            ${PRESETS[$object_type]} \
+            --output ${target}_color.pdf
+    done
 done
 \end{lstlisting}
 
@@ -924,6 +1102,70 @@ present
 \item Final image assembly
 \end{enumerate}
 
+\section{Recent Improvements and Version History}
+
+\subsection{Version 1.1 (Current) - Enhanced Parameter Coverage}
+
+The latest version represents a significant expansion of the ColorFaintGray 
+GUI capabilities, addressing user feedback and implementing comprehensive 
+parameter support:
+
+\subsubsection{Major Enhancements}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Complete Parameter Coverage}: All astscript-color-faint-gray
+parameters now accessible through the GUI interface
+\item \textbf{Enhanced Input Control}: Individual HDU specification, weight
+factors, minimum value settings, and zeropoint adjustments for each channel
+\item \textbf{Robust Preset System}: Completely functional preset save/load
+system with comprehensive validation and error handling
+\item \textbf{Improved Command Generation}: All commands now include
+mandatory output paths with automatic validation
+\item \textbf{Advanced Error Handling}: User-friendly error messages and
+automatic recovery for common issues
+\end{itemize}
+
+\subsubsection{Bug Fixes and Stability Improvements}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Preset Loading Crash Fix}: Resolved application crash when
+loading presets due to missing output file specifications
+\item \textbf{Command Validation}: Enhanced command builder ensures all
+required parameters are always included
+\item \textbf{Parameter Synchronization}: Fixed issues where GUI state and
+command generation could become inconsistent
+\item \textbf{File Handling}: Improved robustness for various FITS file
+formats and structures
+\end{itemize}
+
+\subsubsection{User Interface Improvements}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Organized Parameter Layout}: Logical grouping of input
+settings, basic parameters, and advanced options
+\item \textbf{Real-time Validation}: Immediate feedback on parameter
+validity and conflicts
+\item \textbf{Enhanced Tooltips}: Comprehensive help text for all
+parameters
+\item \textbf{Improved Workflow}: Streamlined parameter adjustment and
+preset management processes
+\end{itemize}
+
+\subsection{Development Priorities}
+
+Future development focuses on:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Performance Optimization}: Enhanced processing speed for
+large images
+\item \textbf{Batch Processing}: GUI support for processing multiple image
+sets
+\item \textbf{Advanced Visualization}: Additional image analysis and
+comparison tools
+\item \textbf{Extended Format Support}: Support for additional input and
+output formats
+\end{itemize}
+
 \section{Acknowledgments and References}
 
 \subsection{Acknowledgments}
@@ -975,12 +1217,16 @@ Elliptical Galaxies & 1.0 & 2.0 & 0.8 & Emphasize outer structure \\
 Spiral Galaxies & 1.2 & 1.8 & 0.9 & Balance arms and nucleus \\
 Star Forming Regions & 0.8 & 2.5 & 0.7 & Reveal emission structure \\
 Globular Clusters & 0.6 & 1.2 & 0.9 & Preserve stellar colors \\
-Deep Fields & 1.5 & 3.0 & 0.7 & Maximum faint enhancement \\
+Deep Survey Fields & 1.5 & 3.0 & 0.7 & Maximum faint enhancement \\
+Ultra-deep Fields & 2.0 & 3.5 & 0.6 & Extreme faint sensitivity \\
 Planetary Nebulae & 1.0 & 2.0 & 0.8 & Balance central star \\
+Reflection Nebulae & 0.9 & 2.2 & 0.8 & Preserve blue colors \\
+Emission Nebulae & 1.1 & 2.6 & 0.7 & Enhance line emission \\
+High-res (HST/JWST) & 0.8 & 1.5 & 0.9 & Preserve fine details \\
 \bottomrule
 \end{tabular}
 \caption{Recommended parameter starting points for different astronomical
-objects.}
+objects, with enhanced coverage for modern datasets.}
 \label{tab:object-params}
 \end{table}
 
