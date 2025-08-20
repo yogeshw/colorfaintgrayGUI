@@ -529,33 +529,45 @@ class ImageComparisonWidget(QWidget):
         """Change the layout of comparison images."""
         if not self.comparison_images:
             return
-            
-        # Remove all widgets from current layout
-        for i in reversed(range(self.images_layout.count())):
-            self.images_layout.itemAt(i).widget().setParent(None)
-            
-        # Remove old layout
-        self.images_widget.setLayout(None)
         
-        # Create new layout based on type
+        # Keep a stable list of widgets to re-add
+        widgets = list(self.comparison_images)
+
+        # Detach widgets from current layout without nuking parents
+        if self.images_layout is not None:
+            while self.images_layout.count():
+                item = self.images_layout.takeAt(0)
+                # Do not change the widget's parent; removing from layout is enough
+                # QWidget will be re-inserted into the new layout below
+                _ = item.widget()
+
+            # Delete the old layout safely
+            try:
+                self.images_layout.deleteLater()
+            except Exception:
+                pass
+
+        # Create new layout based on type (no parent here)
         if layout_type == "Horizontal":
-            self.images_layout = QHBoxLayout(self.images_widget)
+            new_layout = QHBoxLayout()
         elif layout_type == "Vertical":
-            self.images_layout = QVBoxLayout(self.images_widget)
+            new_layout = QVBoxLayout()
         else:  # Grid
-            self.images_layout = QGridLayout(self.images_widget)
-            
-        # Re-add all widgets
+            new_layout = QGridLayout()
+
+        # Install the new layout on the container
+        self.images_widget.setLayout(new_layout)
+        self.images_layout = new_layout
+
+        # Re-add all widgets according to the chosen layout
         if layout_type == "Grid (2x3)":
-            for i, widget in enumerate(self.comparison_images):
+            for i, widget in enumerate(widgets):
                 row = i // 3
                 col = i % 3
                 self.images_layout.addWidget(widget, row, col)
         else:
-            for widget in self.comparison_images:
+            for widget in widgets:
                 self.images_layout.addWidget(widget)
-                
-        self.images_widget.setLayout(self.images_layout)
     
     def toggle_sync(self, enabled):
         """Toggle synchronization of zoom and pan."""
@@ -705,7 +717,13 @@ class ImageComparisonWidget(QWidget):
         """Remove an image from comparison."""
         if comp_widget in self.comparison_images:
             self.comparison_images.remove(comp_widget)
-            self.images_layout.removeWidget(comp_widget)
+            # Safely remove from layout
+            try:
+                self.images_layout.removeWidget(comp_widget)
+            except Exception:
+                pass
+            # Hide before deletion to avoid any paint events
+            comp_widget.setParent(None)
             comp_widget.deleteLater()
             
             # Re-arrange remaining widgets if using grid layout
@@ -724,8 +742,31 @@ class ImageComparisonWidget(QWidget):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            for widget in self.comparison_images[:]:  # Copy list to avoid modification during iteration
-                self.remove_comparison_image(widget)
+            # Detach and delete widgets safely
+            for widget in self.comparison_images:
+                try:
+                    self.images_layout.removeWidget(widget)
+                except Exception:
+                    pass
+                widget.setParent(None)
+                widget.deleteLater()
+
+            # Reset list
+            self.comparison_images.clear()
+
+            # Also clear any items left in the layout
+            try:
+                while self.images_layout.count():
+                    item = self.images_layout.takeAt(0)
+                    w = item.widget()
+                    if w is not None:
+                        w.setParent(None)
+                        w.deleteLater()
+            except Exception:
+                pass
+
+            # Update UI state
+            self.update_comparison_tools()
         
     def on_image_selected(self):
         """Handle image selection changes."""
