@@ -257,7 +257,7 @@ def validate_astscript_parameters(parameters: dict) -> bool:
             
     # Validate parameter ranges
     param_ranges = {
-        'qbright': (0.0, 100.0),
+        'qbright': (0.0, 500.0),  # Increased upper bound to 500
         'stretch': (0.0, 100.0),
         'gamma': (0.1, 10.0),
         'colorval': (0.0, None),  # No upper limit

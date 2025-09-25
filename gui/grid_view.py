@@ -169,6 +169,9 @@ class ThumbnailWidget(QFrame):
         
         if 'stretch' in params and params['stretch'] != 1.0:
             summary_parts.append(f"s={params['stretch']:.1f}")
+
+        if 'contrast' in params and params['contrast'] not in (None, 4.0):
+            summary_parts.append(f"c={params['contrast']:.1f}")
         
         if 'gamma' in params and params['gamma'] != 1.0:
             summary_parts.append(f"γ={params['gamma']:.2f}")

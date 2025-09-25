@@ -520,9 +520,9 @@ class ParameterPanel(QWidget):
         group = QGroupBox("Basic Settings")
         layout = QVBoxLayout(group)
         
-        # qbright parameter - brightness quantile 50
+        # qbright parameter - brightness quantile (expanded max to 500)
         qbright_control = SpinBoxOnlyControl(
-            "qbright", "Brightness Quantile:", 0.0, 100.0, 0.01, 2, 50.0
+            "qbright", "Brightness Quantile:", 0.0, 500.0, 0.01, 2, 50.0
         )
         self.controls["qbright"] = qbright_control
         layout.addWidget(qbright_control)

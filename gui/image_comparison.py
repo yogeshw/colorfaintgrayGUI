@@ -222,7 +222,7 @@ class ComparisonImageWidget(QFrame):
             info += f"Input files: {len(self.cache_entry.input_files)} images\n\n"
             
             # Show key parameters
-            key_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval', 'qthresh']
+            key_params = ['qbright', 'stretch', 'contrast', 'gamma', 'colorval', 'grayval', 'qthresh']
             info += "Key Parameters:\n"
             for param in key_params:
                 value = self.cache_entry.parameters.get(param)
@@ -617,7 +617,7 @@ class ImageComparisonWidget(QWidget):
                 all_params.update(img.cache_entry.parameters.keys())
         
         # Create comparison table
-        important_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval', 'qthresh']
+        important_params = ['qbright', 'stretch', 'contrast', 'gamma', 'colorval', 'grayval', 'qthresh']
         
         for param_group in [important_params, sorted(all_params - set(important_params))]:
             if not param_group:
@@ -831,7 +831,7 @@ class ImageComparisonWidget(QWidget):
             diff_text += "No parameter information available for comparison."
         else:
             # Group parameters by importance
-            important_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval', 'qthresh']
+            important_params = ['qbright', 'stretch', 'contrast', 'gamma', 'colorval', 'grayval', 'qthresh']
             other_params = sorted(all_params - set(important_params))
             
             for param_group, title in [(important_params, "Key Parameters"), (other_params, "Other Parameters")]:
@@ -955,7 +955,7 @@ class ImageComparisonWidget(QWidget):
                     f.write(f"Image {i+1}: {img_data['file']}\n")
                     if 'parameters' in img_data:
                         f.write("  Key Parameters:\n")
-                        key_params = ['qbright', 'stretch', 'gamma', 'colorval', 'grayval']
+                        key_params = ['qbright', 'stretch', 'contrast', 'gamma', 'colorval', 'grayval']
                         for param in key_params:
                             value = img_data['parameters'].get(param, 'default')
                             f.write(f"    {param}: {value}\n")

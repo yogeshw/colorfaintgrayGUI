@@ -256,8 +256,8 @@ class CommandBuilder:
         
         # Validate numeric ranges
         if 'qbright' in params and params['qbright'] is not None:
-            if not (0.0 <= params['qbright'] <= 100.0):
-                errors.append("qbright must be between 0.0 and 100.0")
+            if not (0.0 <= params['qbright'] <= 500.0):
+                errors.append("qbright must be between 0.0 and 500.0")
         
         if 'stretch' in params and params['stretch'] is not None:
             if params['stretch'] < 0:

@@ -26,15 +26,19 @@ import os
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-    QFrame, QSizePolicy, QToolBar, QSlider, QSpinBox, QMessageBox
+    QFrame, QSizePolicy, QToolBar, QSlider, QSpinBox, QMessageBox, QRubberBand
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRect, QPoint, QSize
-from PyQt6.QtGui import QPixmap, QImage, QPainter, QWheelEvent, QMouseEvent, QPen, QBrush
+from PyQt6.QtCore import Qt, pyqtSignal, QRect, QPoint, QSize, QTimer
+from PyQt6.QtGui import QPixmap, QImage, QPainter, QWheelEvent, QMouseEvent, QPen, QBrush, QKeyEvent
 
 
 class ImageDisplayWidget(QLabel):
     """Custom widget for displaying and interacting with images."""
     
+    # Signals to notify container (viewer) for overlay updates
+    view_changed = pyqtSignal()
+    zoom_changed = pyqtSignal(float)
+
     def __init__(self, parent=None):
         """Initialize image display widget."""
         super().__init__(parent)
@@ -50,6 +54,20 @@ class ImageDisplayWidget(QLabel):
         self.last_pan_point = QPoint()
         self.pan_offset = QPoint(0, 0)
         self.is_panning = False
+        self.space_pan_mode = False  # Spacebar held for temporary panning
+
+        # Inertial scrolling support
+        self._recent_moves = []  # List of (delta, timestamp_ms)
+        self._inertial_timer = QTimer(self)
+        self._inertial_timer.setInterval(16)  # ~60 FPS
+        self._inertial_timer.timeout.connect(self._inertial_step)
+        self._velocity = QPoint(0, 0)
+
+        # Rubber-band zoom (right-drag)
+        self._rubber_band = None
+        self._rubber_origin = QPoint()
+        self._rubber_active = False
+        self._min_rubber_size = 12  # pixels
         
         # Widget setup
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -60,6 +78,7 @@ class ImageDisplayWidget(QLabel):
         
         # Mouse tracking for pan
         self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         
         # Initial state
         self.set_placeholder_text("No image loaded")
@@ -92,6 +111,9 @@ class ImageDisplayWidget(QLabel):
             
             self.original_pixmap = pixmap
             self.reset_view()
+            # Provide visual cue that panning is available
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            self.view_changed.emit()
             return True
             
         except Exception as e:
@@ -212,6 +234,25 @@ class ImageDisplayWidget(QLabel):
         # Clear text and set pixmap
         self.setText("")
         self.setPixmap(self.scaled_pixmap)
+        # Ensure cursor reflects pannable state
+        if not self.is_panning:
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.zoom_changed.emit(self.zoom_factor)
+        self.view_changed.emit()
+
+    # ------------------------- PANNING SUPPORT -------------------------
+    def _find_scroll_area(self):
+        """Locate the ancestor QScrollArea that contains this label.
+
+        Returns:
+            QScrollArea or None
+        """
+        parent = self.parent()
+        # Import here to avoid circulars (already imported above, but keeps local scope clear)
+        from PyQt6.QtWidgets import QScrollArea as _QSA
+        while parent is not None and not isinstance(parent, _QSA):
+            parent = parent.parent()
+        return parent
     
     def wheelEvent(self, event: QWheelEvent):
         """Handle mouse wheel for zooming."""
@@ -227,32 +268,65 @@ class ImageDisplayWidget(QLabel):
             self.zoom_out()
         
         event.accept()
+        self.view_changed.emit()
     
     def mousePressEvent(self, event: QMouseEvent):
         """Handle mouse press for starting pan."""
-        if event.button() == Qt.MouseButton.LeftButton and self.original_pixmap:
+        if event.button() == Qt.MouseButton.LeftButton and self.original_pixmap and not self._rubber_active:
             self.is_panning = True
             self.last_pan_point = event.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            self._recent_moves.clear()
+            self._inertial_timer.stop()
+        elif event.button() == Qt.MouseButton.MiddleButton and self.original_pixmap:
+            # Middle click: center view on clicked position (no drag pan)
+            scroll_area = self._find_scroll_area()
+            if scroll_area is not None:
+                vp_size = scroll_area.viewport().size()
+                # Position in the label (scaled coordinates)
+                click_pos = event.pos()
+                # Target top-left so that click point becomes center
+                target_x = click_pos.x() - vp_size.width() / 2
+                target_y = click_pos.y() - vp_size.height() / 2
+                h_bar = scroll_area.horizontalScrollBar()
+                v_bar = scroll_area.verticalScrollBar()
+                h_bar.setValue(max(0, min(int(target_x), h_bar.maximum())))
+                v_bar.setValue(max(0, min(int(target_y), v_bar.maximum())))
+                self.view_changed.emit()
+            # Do not start panning with middle button anymore
+        elif event.button() == Qt.MouseButton.RightButton and self.original_pixmap:
+            # Start rubber-band zoom selection
+            self._rubber_active = True
+            self._rubber_origin = event.pos()
+            if self._rubber_band is None:
+                self._rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
+            self._rubber_band.setGeometry(QRect(self._rubber_origin, QSize()))
+            self._rubber_band.show()
         
         super().mousePressEvent(event)
     
     def mouseMoveEvent(self, event: QMouseEvent):
         """Handle mouse move for panning."""
-        if self.is_panning and self.original_pixmap:
+        if self._rubber_active and self.original_pixmap:
+            # Update rubber band geometry
+            rect = QRect(self._rubber_origin, event.pos()).normalized()
+            self._rubber_band.setGeometry(rect)
+        elif self.is_panning and self.original_pixmap:
             # Calculate pan delta
             delta = event.pos() - self.last_pan_point
             self.last_pan_point = event.pos()
             
-            # Pan by adjusting the parent scroll area's scrollbars
-            parent_scroll = self.parent()
-            if hasattr(parent_scroll, 'horizontalScrollBar') and hasattr(parent_scroll, 'verticalScrollBar'):
-                h_bar = parent_scroll.horizontalScrollBar()
-                v_bar = parent_scroll.verticalScrollBar()
-                
-                # Invert delta for natural panning direction
+            # Pan by adjusting the containing scroll area's scrollbars
+            scroll_area = self._find_scroll_area()
+            if scroll_area is not None:
+                h_bar = scroll_area.horizontalScrollBar()
+                v_bar = scroll_area.verticalScrollBar()
+                # Invert delta for natural panning direction (drag left -> move view left)
                 h_bar.setValue(h_bar.value() - delta.x())
                 v_bar.setValue(v_bar.value() - delta.y())
+                # Record for inertial scrolling (most recent deltas)
+                self._record_move(delta)
+                self.view_changed.emit()
             
         elif self.original_pixmap:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
@@ -264,13 +338,137 @@ class ImageDisplayWidget(QLabel):
     def mouseReleaseEvent(self, event: QMouseEvent):
         """Handle mouse release for ending pan."""
         if event.button() == Qt.MouseButton.LeftButton:
-            self.is_panning = False
-            if self.original_pixmap:
-                self.setCursor(Qt.CursorShape.OpenHandCursor)
-            else:
-                self.setCursor(Qt.CursorShape.ArrowCursor)
+            if self.is_panning:
+                self.is_panning = False
+                if self.original_pixmap:
+                    self.setCursor(Qt.CursorShape.OpenHandCursor)
+                else:
+                    self.setCursor(Qt.CursorShape.ArrowCursor)
+                # Start inertial scrolling if velocity present
+                self._start_inertial_if_needed()
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            # Middle click release does nothing special now (centering done on press)
+            pass
+        elif event.button() == Qt.MouseButton.RightButton and self._rubber_active:
+            self._finish_rubber_band(event.pos())
         
         super().mouseReleaseEvent(event)
+
+    # --------------- Rubber-band zoom helpers ---------------
+    def _finish_rubber_band(self, release_pos: QPoint):
+        if not self._rubber_active:
+            return
+        self._rubber_active = False
+        if self._rubber_band:
+            rect = self._rubber_band.geometry()
+            self._rubber_band.hide()
+        else:
+            return
+        if rect.width() < self._min_rubber_size or rect.height() < self._min_rubber_size:
+            # Too small - treat as cancel
+            return
+        # Compute new zoom to fit selected area into viewport
+        scroll_area = self._find_scroll_area()
+        if scroll_area is None:
+            return
+        vp_size = scroll_area.viewport().size()
+        # Current scaling vs original pixmap
+        if not self.original_pixmap:
+            return
+        current_zoom = self.zoom_factor
+        # Rectangle is in scaled coordinates; want new zoom so that selected width fits viewport
+        scale_w = vp_size.width() / rect.width()
+        scale_h = vp_size.height() / rect.height()
+        target_zoom = current_zoom * min(scale_w, scale_h)
+        # Clamp
+        target_zoom = max(self.min_zoom, min(self.max_zoom, target_zoom))
+        self.set_zoom(target_zoom)
+        # Center selected area
+        # Compute center in scaled coords
+        center_scaled = rect.center()
+        # After zoom change, scaled size changed by factor (target_zoom/current_zoom)
+        scale_factor = target_zoom / current_zoom
+        new_center_x = center_scaled.x() * scale_factor
+        new_center_y = center_scaled.y() * scale_factor
+        # Desired scrollbar positions so that center is middle of viewport
+        h_bar = scroll_area.horizontalScrollBar()
+        v_bar = scroll_area.verticalScrollBar()
+        h_target = int(new_center_x - vp_size.width()/2)
+        v_target = int(new_center_y - vp_size.height()/2)
+        h_bar.setValue(max(0, min(h_target, h_bar.maximum())))
+        v_bar.setValue(max(0, min(v_target, v_bar.maximum())))
+        self.view_changed.emit()
+
+    # --------------- Inertial scrolling helpers ---------------
+    def _record_move(self, delta: QPoint):
+        # Keep last ~150ms of motion samples
+        from time import monotonic
+        now_ms = int(monotonic() * 1000)
+        self._recent_moves.append((delta, now_ms))
+        # Prune older than 180ms
+        cutoff = now_ms - 180
+        self._recent_moves = [(d, t) for d, t in self._recent_moves if t >= cutoff]
+
+    def _start_inertial_if_needed(self):
+        if not self._recent_moves:
+            return
+        # Compute average velocity (pixels per frame step ~16ms) from accumulated delta/time
+        if len(self._recent_moves) < 2:
+            return
+        deltas = [d for d, _ in self._recent_moves]
+        # Total delta
+        total_dx = sum(d.x() for d in deltas)
+        total_dy = sum(d.y() for d in deltas)
+        # Total time
+        times = [t for _, t in self._recent_moves]
+        duration = max(1, times[-1] - times[0])
+        # Velocity per ms
+        vx = total_dx / duration
+        vy = total_dy / duration
+        # Convert to velocity per tick (16ms)
+        self._velocity = QPoint(int(vx * 16), int(vy * 16))
+        # Threshold
+        if abs(self._velocity.x()) < 2 and abs(self._velocity.y()) < 2:
+            return
+        self._inertial_timer.start()
+
+    def _inertial_step(self):
+        if self.is_panning:
+            self._inertial_timer.stop()
+            return
+        scroll_area = self._find_scroll_area()
+        if scroll_area is None:
+            self._inertial_timer.stop()
+            return
+        if self._velocity.manhattanLength() < 1:
+            self._inertial_timer.stop()
+            return
+        h_bar = scroll_area.horizontalScrollBar()
+        v_bar = scroll_area.verticalScrollBar()
+        # Move (invert like during drag)
+        new_h = h_bar.value() - self._velocity.x()
+        new_v = v_bar.value() - self._velocity.y()
+        h_bar.setValue(max(0, min(new_h, h_bar.maximum())))
+        v_bar.setValue(max(0, min(new_v, v_bar.maximum())))
+        # Friction
+        self._velocity.setX(int(self._velocity.x() * 0.90))
+        self._velocity.setY(int(self._velocity.y() * 0.90))
+        self.view_changed.emit()
+
+    # --------------- Keyboard support (space for temporary pan) ---------------
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Space and not self.space_pan_mode and self.original_pixmap:
+            self.space_pan_mode = True
+            if not self.is_panning:
+                self.setCursor(Qt.CursorShape.OpenHandCursor)
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Space and self.space_pan_mode:
+            self.space_pan_mode = False
+            if self.original_pixmap and not self.is_panning:
+                self.setCursor(Qt.CursorShape.OpenHandCursor)
+        super().keyReleaseEvent(event)
     
     def get_zoom_factor(self) -> float:
         """Get current zoom factor."""
